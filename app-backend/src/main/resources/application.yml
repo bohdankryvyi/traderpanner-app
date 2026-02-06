@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:traderplanner}
+    username: ${DB_USER:trader}
+    password: ${DB_PASSWORD:trader}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    com.traderplanner: DEBUG
+
+fx:
+  eurToUsd: 1.10
+
+ai:
+  cacheTtlMinutes: 30
+

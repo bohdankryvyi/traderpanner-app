@@ -1,0 +1,86 @@
+{
+  "appName": "TraderPlanner",
+  "header": {
+    "dataStatus": "Статус даних: MVP",
+    "help": "Довідка",
+    "langEn": "EN",
+    "langUa": "UA"
+  },
+  "home": {
+    "title": "TraderPlanner MVP",
+    "description": "Невеликий демо-додаток для нотаток по трейдингу та портфеля з мок-цінами й опціональною AI-підказкою.",
+    "disclaimerTitle": "Дисклеймер",
+    "disclaimerText": "Це MVP демо. Ціни — мок (без реальних ринкових даних). Це не є фінансовою порадою.",
+    "goTrading": "Трейдинг + AI-підказки",
+    "goPortfolio": "Довгостроковий портфель"
+  },
+  "common": {
+    "create": "Створити",
+    "update": "Оновити",
+    "cancel": "Скасувати",
+    "edit": "Редагувати",
+    "delete": "Видалити",
+    "refreshPrices": "Оновити ціни",
+    "loading": "Завантаження...",
+    "error": "Помилка"
+  },
+  "trading": {
+    "title": "Трейдинг",
+    "form": {
+      "ticker": "Тікер",
+      "note": "Нотатка / коментар",
+      "entryPrice": "$ Ціна входу"
+    },
+    "table": {
+      "ticker": "Тікер",
+      "note": "Нотатка",
+      "entryPrice": "$ Ціна входу",
+      "currentPriceUsd": "Поточна ціна (USD)",
+      "actions": "Дії"
+    },
+    "ai": {
+      "title": "Поради що торгувати зараз",
+      "timeframe": "Таймфрейм",
+      "analyzeNow": "Аналізувати",
+      "missingKey": "AI-поради вимкнені, бо на бекенді не налаштовано OPENAI_API_KEY.",
+      "unavailable": "Дані ринку / AI недоступні.",
+      "bestSetup": "Найкращий сетап",
+      "generatedAt": "Згенеровано"
+    }
+  },
+  "portfolio": {
+    "title": "Портфель",
+    "form": {
+      "sector": "Сектор",
+      "company": "Компанія",
+      "ticker": "Тікер",
+      "buyPrice": "Ціна купівлі",
+      "targetPrice": "Цільова ціна",
+      "quantity": "Кількість",
+      "currency": "Валюта",
+      "notes": "Нотатки"
+    },
+    "table": {
+      "sector": "Сектор",
+      "company": "Компанія",
+      "ticker": "Тікер",
+      "currency": "Валюта",
+      "buyPrice": "Ціна купівлі",
+      "targetPrice": "Цільова ціна",
+      "quantity": "Кількість",
+      "notes": "Нотатки",
+      "currentPriceUsd": "Поточна ціна (USD)",
+      "upsidePercent": "Потенціал (%)",
+      "investedAmountUsd": "Інвестовано (USD)",
+      "sharePercent": "Частка (%)",
+      "expectedProfitUsd": "Очік. прибуток (USD)",
+      "profitSharePercent": "Частка прибутку (%)",
+      "actions": "Дії"
+    }
+  },
+  "helpPage": {
+    "title": "Довідка",
+    "text": "У цьому MVP ціни — мок з бекенду (без зовнішніх провайдерів). AI-поради опціональні та потребують OPENAI_API_KEY у змінних середовища бекенду."
+  }
+}
+

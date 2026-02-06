@@ -1,0 +1,86 @@
+{
+  "appName": "TraderPlanner",
+  "header": {
+    "dataStatus": "Data status: MVP",
+    "help": "Help",
+    "langEn": "EN",
+    "langUa": "UA"
+  },
+  "home": {
+    "title": "TraderPlanner MVP",
+    "description": "A small demo app for trading notes and portfolio tracking with mock prices and an optional AI tips feature.",
+    "disclaimerTitle": "Disclaimer",
+    "disclaimerText": "This is an MVP demo. Prices are mock (no real market data). Nothing here is financial advice.",
+    "goTrading": "Trading + AI tips",
+    "goPortfolio": "Long-term portfolio"
+  },
+  "common": {
+    "create": "Create",
+    "update": "Update",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "refreshPrices": "Refresh prices",
+    "loading": "Loading...",
+    "error": "Error"
+  },
+  "trading": {
+    "title": "Trading",
+    "form": {
+      "ticker": "Ticker",
+      "note": "Note / comment",
+      "entryPrice": "$ Entry price"
+    },
+    "table": {
+      "ticker": "Ticker",
+      "note": "Note",
+      "entryPrice": "$ Entry price",
+      "currentPriceUsd": "Current Price (USD)",
+      "actions": "Actions"
+    },
+    "ai": {
+      "title": "Tips what to trade now",
+      "timeframe": "Timeframe",
+      "analyzeNow": "Analyze now",
+      "missingKey": "AI tips are disabled because the backend is missing OPENAI_API_KEY.",
+      "unavailable": "Market data / AI unavailable.",
+      "bestSetup": "Best setup",
+      "generatedAt": "Generated at"
+    }
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "form": {
+      "sector": "Sector",
+      "company": "Company",
+      "ticker": "Ticker",
+      "buyPrice": "Buy price",
+      "targetPrice": "Target price",
+      "quantity": "Quantity",
+      "currency": "Currency",
+      "notes": "Notes"
+    },
+    "table": {
+      "sector": "Sector",
+      "company": "Company",
+      "ticker": "Ticker",
+      "currency": "Currency",
+      "buyPrice": "Buy price",
+      "targetPrice": "Target price",
+      "quantity": "Quantity",
+      "notes": "Notes",
+      "currentPriceUsd": "Current Price (USD)",
+      "upsidePercent": "Upside (%)",
+      "investedAmountUsd": "Invested (USD)",
+      "sharePercent": "Share (%)",
+      "expectedProfitUsd": "Expected Profit (USD)",
+      "profitSharePercent": "Profit Share (%)",
+      "actions": "Actions"
+    }
+  },
+  "helpPage": {
+    "title": "Help",
+    "text": "This MVP uses mock market prices from the backend (no external market data). AI tips are optional and require OPENAI_API_KEY configured in the backend environment."
+  }
+}
+

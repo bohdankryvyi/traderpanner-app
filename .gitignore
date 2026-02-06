@@ -1,0 +1,45 @@
+# Java / Maven / Gradle
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+.mvn/wrapper/maven-wrapper.jar
+.gradle/
+build/
+out/
+
+# Spring Boot
+*.log
+
+# Node / Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+.vite/
+.turbo/
+
+# IDEs and editors
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# OS / misc
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Env / local overrides
+.env
+.env.local
+.env.*.local
+
