@@ -53,6 +53,9 @@ docker compose up -d
 cd app-backend
 .\mvnw.cmd spring-boot:run
 ```
+Note: Run $env:JAVA_TOOL_OPTIONS="-Duser.timezone=UTC"
+If you receive a timezone issue on a build failure. Then retry .\mvnw.cmd spring-boot:run again
+
 Backend: `http://localhost:8080`  
 Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 
