@@ -172,10 +172,10 @@ export function PortfolioRoute() {
         className: 'text-right',
         render: (r) => (
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" className="px-3 py-1.5" onClick={() => onEdit(r)}>
+            <Button type="button" variant="secondary" className="px-3 py-1.5" data-testid="portfolio-row-edit" onClick={() => onEdit(r)}>
               {t('common.edit')}
             </Button>
-            <Button type="button" variant="danger" className="px-3 py-1.5" onClick={() => onDelete(r.id)}>
+            <Button type="button" variant="danger" className="px-3 py-1.5" data-testid="portfolio-row-delete" onClick={() => onDelete(r.id)}>
               {t('common.delete')}
             </Button>
           </div>
@@ -197,16 +197,19 @@ export function PortfolioRoute() {
       <div className="rounded-lg border border-slate-200 bg-white p-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           <Input
+            data-testid="portfolio-sector"
             label={t('portfolio.form.sector')}
             value={form.sector}
             onChange={(e) => setForm((s) => ({ ...s, sector: e.target.value }))}
           />
           <Input
+            data-testid="portfolio-company"
             label={t('portfolio.form.company')}
             value={form.company}
             onChange={(e) => setForm((s) => ({ ...s, company: e.target.value }))}
           />
           <Input
+            data-testid="portfolio-ticker"
             label={t('portfolio.form.ticker')}
             value={form.ticker}
             onChange={(e) => setForm((s) => ({ ...s, ticker: e.target.value }))}
@@ -222,6 +225,7 @@ export function PortfolioRoute() {
           </Select>
 
           <Input
+            data-testid="portfolio-buy-price"
             label={t('portfolio.form.buyPrice')}
             type="number"
             inputMode="decimal"
@@ -229,6 +233,7 @@ export function PortfolioRoute() {
             onChange={(e) => setForm((s) => ({ ...s, buyPrice: e.target.value }))}
           />
           <Input
+            data-testid="portfolio-target-price"
             label={t('portfolio.form.targetPrice')}
             type="number"
             inputMode="decimal"
@@ -236,6 +241,7 @@ export function PortfolioRoute() {
             onChange={(e) => setForm((s) => ({ ...s, targetPrice: e.target.value }))}
           />
           <Input
+            data-testid="portfolio-quantity"
             label={t('portfolio.form.quantity')}
             type="number"
             inputMode="decimal"
@@ -243,6 +249,7 @@ export function PortfolioRoute() {
             onChange={(e) => setForm((s) => ({ ...s, quantity: e.target.value }))}
           />
           <Input
+            data-testid="portfolio-notes"
             label={t('portfolio.form.notes')}
             value={form.notes}
             onChange={(e) => setForm((s) => ({ ...s, notes: e.target.value }))}
@@ -250,10 +257,10 @@ export function PortfolioRoute() {
           />
         </div>
 
-        {formError ? <div className="mt-3 text-sm text-rose-700">{formError}</div> : null}
+        {formError ? <div className="mt-3 text-sm text-rose-700" data-testid="portfolio-form-error">{formError}</div> : null}
 
         <div className="mt-4 flex gap-2">
-          <Button type="button" onClick={onSubmit}>
+          <Button type="button" data-testid="portfolio-form-submit" onClick={onSubmit}>
             {editingId == null ? t('common.create') : t('common.update')}
           </Button>
           {editingId != null ? (
@@ -272,7 +279,7 @@ export function PortfolioRoute() {
 
       {loading ? <div className="text-sm text-slate-600">{t('common.loading')}</div> : null}
 
-      <Table columns={columns} rows={rows} rowKey={(r) => String(r.id)} />
+      <Table columns={columns} rows={rows} rowKey={(r) => String(r.id)} rowTestId={(r) => `portfolio-row-${r.id}`} />
     </div>
   )
 }

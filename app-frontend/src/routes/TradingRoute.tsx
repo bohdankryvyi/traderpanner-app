@@ -148,10 +148,10 @@ export function TradingRoute() {
         className: 'text-right',
         render: (r) => (
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" className="px-3 py-1.5" onClick={() => onEdit(r)}>
+            <Button type="button" variant="secondary" className="px-3 py-1.5" data-testid="trading-row-edit" onClick={() => onEdit(r)}>
               {t('common.edit')}
             </Button>
-            <Button type="button" variant="danger" className="px-3 py-1.5" onClick={() => onDelete(r.id)}>
+            <Button type="button" variant="danger" className="px-3 py-1.5" data-testid="trading-row-delete" onClick={() => onDelete(r.id)}>
               {t('common.delete')}
             </Button>
           </div>
@@ -173,18 +173,21 @@ export function TradingRoute() {
       <div className="rounded-lg border border-slate-200 bg-white p-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Input
+            data-testid="trading-ticker"
             label={t('trading.form.ticker')}
             value={form.ticker}
             onChange={(e) => setForm((s) => ({ ...s, ticker: e.target.value }))}
             placeholder="AAPL"
           />
           <Input
+            data-testid="trading-note"
             label={t('trading.form.note')}
             value={form.note}
             onChange={(e) => setForm((s) => ({ ...s, note: e.target.value }))}
             placeholder="Optional"
           />
           <Input
+            data-testid="trading-entry-price"
             label={t('trading.form.entryPrice')}
             type="number"
             inputMode="decimal"
@@ -194,10 +197,10 @@ export function TradingRoute() {
           />
         </div>
 
-        {formError ? <div className="mt-3 text-sm text-rose-700">{formError}</div> : null}
+        {formError ? <div className="mt-3 text-sm text-rose-700" data-testid="trading-form-error">{formError}</div> : null}
 
         <div className="mt-4 flex gap-2">
-          <Button type="button" onClick={onSubmit}>
+          <Button type="button" data-testid="trading-form-submit" onClick={onSubmit}>
             {editingId == null ? t('common.create') : t('common.update')}
           </Button>
           {editingId != null ? (
@@ -216,7 +219,7 @@ export function TradingRoute() {
 
       {loading ? <div className="text-sm text-slate-600">{t('common.loading')}</div> : null}
 
-      <Table columns={columns} rows={rows} rowKey={(r) => String(r.id)} />
+      <Table columns={columns} rows={rows} rowKey={(r) => String(r.id)} rowTestId={(r) => `trading-row-${r.id}`} />
 
       <div className="rounded-lg border border-slate-200 bg-white p-4">
         <div className="mb-3 text-base font-semibold">{t('trading.ai.title')}</div>
