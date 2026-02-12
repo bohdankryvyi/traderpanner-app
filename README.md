@@ -79,9 +79,12 @@ npx playwright install
 npm run test
 ```
 
-If you want to see how tests are running in the browser then
-cd C:\workprojects\traderpanner-app\e2e
+To run tests in the browser (headed mode), from the repo root:
+
+```powershell
+cd e2e
 npx playwright test --headed
+```
 
 ## How the app works (including AI)
 

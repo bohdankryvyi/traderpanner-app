@@ -20,10 +20,11 @@ npx playwright install
 npm run test
 ```
 
-If you want to see how tests are running in the browser then
-cd C:\workprojects\traderpanner-app\e2e
-npx playwright test --headed
+To run tests in the browser (headed mode):
 
+```powershell
+npx playwright test --headed
+```
 
 - **UI mode:** `npm run test:ui`
 - **Report:** `npm run report` (after a run)
