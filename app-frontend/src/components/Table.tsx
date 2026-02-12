@@ -10,10 +10,12 @@ export function Table<T>({
   columns,
   rows,
   rowKey,
+  rowTestId,
 }: {
   columns: Array<ColumnDef<T>>
   rows: T[]
   rowKey: (row: T) => string
+  rowTestId?: (row: T) => string
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
@@ -29,7 +31,11 @@ export function Table<T>({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={rowKey(row)} className="border-t border-slate-200">
+            <tr
+              key={rowKey(row)}
+              className="border-t border-slate-200"
+              data-testid={rowTestId?.(row)}
+            >
               {columns.map((c, idx) => (
                 <td key={idx} className={`whitespace-nowrap px-4 py-3 ${c.className ?? ''}`}>
                   {c.render(row)}

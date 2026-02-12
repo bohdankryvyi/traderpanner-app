@@ -3,8 +3,9 @@
 Monorepo:
 - `app-backend` — Spring Boot REST API (Java 25, Spring Boot 3.4.7)
 - `app-frontend` — React 18 + TypeScript + Vite + Tailwind
+- `e2e` — Playwright + TypeScript E2E tests (separate module inside this repo)
 
-> This repository contains the application only. Automated tests (Playwright) will be in a separate repository.
+> E2E test implementation details and the full runbook are documented in `e2e/README.md`.
 
 ## What is this app?
 
@@ -66,6 +67,21 @@ Frontend: `http://localhost:5173`
 
 On **PowerShell**, for custom logging quote the `-D` expression:  
 `.\mvnw.cmd "-Dspring-boot.run.arguments=--logging.level.com.traderplanner=DEBUG" spring-boot:run`
+
+## E2E tests
+
+E2E tests live in the e2e/ module and run against locally running backend + frontend.
+
+```powershell
+cd e2e
+npm install
+npx playwright install
+npm run test
+```
+
+If you want to see how tests are running in the browser then
+cd C:\workprojects\traderpanner-app\e2e
+npx playwright test --headed
 
 ## How the app works (including AI)
 
