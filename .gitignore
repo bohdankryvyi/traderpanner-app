@@ -43,3 +43,7 @@ desktop.ini
 .env.local
 .env.*.local
 
+# E2E/run scripts logs and PIDs
+logs/*.log
+logs/*.pid
+

@@ -44,6 +44,22 @@ Infra (local):
 
 ## Local run
 
+### One-command run (Postgres + backend + frontend + E2E)
+
+From the repo root you can start everything, run E2E tests, and then stop services in one go:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\run-e2e.ps1
+```
+
+The script sets `JAVA_TOOL_OPTIONS="-Duser.timezone=UTC"` for the backend automatically, so no manual timezone step is needed. To stop backend, frontend, and Docker Compose (e.g. if you started them manually or the script was interrupted):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\stop-local.ps1
+```
+
+### Manual run
+
 1. Start PostgreSQL:
 ```bash
 docker compose up -d
