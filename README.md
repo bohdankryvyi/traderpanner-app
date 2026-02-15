@@ -7,6 +7,8 @@ Monorepo:
 
 > E2E test implementation details and the full runbook are documented in `e2e/README.md`.
 
+> AI recommendation feature is in development and will be fully completed in the next iterations.
+
 ## What is this app?
 
 TraderPlanner is a small demo app with 4 pages:
