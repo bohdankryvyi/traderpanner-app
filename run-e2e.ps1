@@ -6,7 +6,9 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = $PSScriptRoot
 $LogsDir = Join-Path $RepoRoot "logs"
 $BackendLog = Join-Path $LogsDir "backend.log"
+$BackendErrLog = Join-Path $LogsDir "backend-err.log"
 $FrontendLog = Join-Path $LogsDir "frontend.log"
+$FrontendErrLog = Join-Path $LogsDir "frontend-err.log"
 $BackendPidFile = Join-Path $LogsDir "backend.pid"
 $FrontendPidFile = Join-Path $LogsDir "frontend.pid"
 
@@ -64,9 +66,9 @@ function Start-Backend {
     Write-Host "Starting backend..."
     $env:JAVA_TOOL_OPTIONS = "-Duser.timezone=UTC"
     $backendDir = Join-Path $RepoRoot "app-backend"
-    $p = Start-Process -FilePath (Join-Path $backendDir "mvnw.cmd") -ArgumentList "-DskipTests","spring-boot:run" -WorkingDirectory $backendDir -PassThru -RedirectStandardOutput $BackendLog -RedirectStandardError $BackendLog -NoNewWindow
+    $p = Start-Process -FilePath (Join-Path $backendDir "mvnw.cmd") -ArgumentList "-DskipTests","spring-boot:run" -WorkingDirectory $backendDir -PassThru -RedirectStandardOutput $BackendLog -RedirectStandardError $BackendErrLog -NoNewWindow
     $p.Id | Set-Content -Path $BackendPidFile
-    Write-Host "Backend started (PID $($p.Id)), logging to $BackendLog"
+    Write-Host "Backend started (PID $($p.Id)), logging to $BackendLog and $BackendErrLog"
 }
 
 function Wait-Backend {
@@ -98,9 +100,9 @@ function Start-Frontend {
         Push-Location $frontendDir
         try { & npm install } finally { Pop-Location }
     }
-    $p = Start-Process -FilePath "cmd.exe" -ArgumentList "/c","npm run dev" -WorkingDirectory $frontendDir -PassThru -RedirectStandardOutput $FrontendLog -RedirectStandardError $FrontendLog -NoNewWindow
+    $p = Start-Process -FilePath "cmd.exe" -ArgumentList "/c","npm run dev" -WorkingDirectory $frontendDir -PassThru -RedirectStandardOutput $FrontendLog -RedirectStandardError $FrontendErrLog -NoNewWindow
     $p.Id | Set-Content -Path $FrontendPidFile
-    Write-Host "Frontend started (PID $($p.Id)), logging to $FrontendLog"
+    Write-Host "Frontend started (PID $($p.Id)), logging to $FrontendLog and $FrontendErrLog"
 }
 
 function Wait-Frontend {
@@ -141,21 +143,27 @@ function Run-E2E {
     }
 }
 
+function Stop-ProcessTree {
+    param([int]$ProcessId)
+    # On Windows, stored PIDs are wrappers (mvnw.cmd/cmd.exe). taskkill /T kills the process tree so Java/Node children are terminated.
+    & taskkill /T /F /PID $ProcessId 2>$null
+}
+
 function Cleanup {
     Write-Host "Cleaning up..."
     if (Test-Path $FrontendPidFile) {
-        $pid = Get-Content $FrontendPidFile -ErrorAction SilentlyContinue
-        if ($pid -match "^\d+$") {
-            Stop-Process -Id ([int]$pid) -Force -ErrorAction SilentlyContinue
-            Write-Host "Stopped frontend (PID $pid)"
+        $procId = Get-Content $FrontendPidFile -ErrorAction SilentlyContinue
+        if ($procId -match "^\d+$") {
+            Stop-ProcessTree -ProcessId ([int]$procId)
+            Write-Host "Stopped frontend (PID $procId and child processes)"
         }
         Remove-Item $FrontendPidFile -Force -ErrorAction SilentlyContinue
     }
     if (Test-Path $BackendPidFile) {
-        $pid = Get-Content $BackendPidFile -ErrorAction SilentlyContinue
-        if ($pid -match "^\d+$") {
-            Stop-Process -Id ([int]$pid) -Force -ErrorAction SilentlyContinue
-            Write-Host "Stopped backend (PID $pid)"
+        $procId = Get-Content $BackendPidFile -ErrorAction SilentlyContinue
+        if ($procId -match "^\d+$") {
+            Stop-ProcessTree -ProcessId ([int]$procId)
+            Write-Host "Stopped backend (PID $procId and child processes)"
         }
         Remove-Item $BackendPidFile -Force -ErrorAction SilentlyContinue
     }
