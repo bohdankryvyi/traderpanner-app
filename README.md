@@ -105,6 +105,24 @@ cd e2e
 npx playwright test --headed
 ```
 
+## CI: GitHub Actions E2E
+
+- **Workflow file:** `.github/workflows/e2e.yml`
+- **When it runs:** On every Pull Request (all branches) and on manual run (`workflow_dispatch`).
+- **What CI starts:**
+  - **Postgres** — service container `postgres:16` (port 5432, healthcheck).
+  - **Backend** — Spring Boot on `:8080` with `JAVA_TOOL_OPTIONS=-Duser.timezone=UTC`, DB env vars set for the Postgres service.
+  - **Frontend** — built with `npm ci` + `npm run build`, then served via `npm run preview -- --host 127.0.0.1 --port 5173` (`VITE_API_BASE_URL=http://localhost:8080`).
+  - **Playwright** — tests run from the `e2e/` module.
+- **What the tests do (high level):**
+  - **Trading:** CRUD + negative validation; verify `/api/trading` returns `[]` after cleanup.
+  - **Portfolio:** CRUD + negative validation; verify `/api/portfolio` returns `[]` after cleanup.
+  - **Isolation:** Prefix-based cleanup per worker (parallel-safe).
+- **Artifacts (uploaded even on failure):**
+  - **playwright-report** — HTML report.
+  - **app-logs** — `backend.log`, `frontend.log`.
+- **Branch protection:** To require E2E before merge, add the check **e2e** (job name) as a required status check in the branch protection rule.
+
 ## How the app works (including AI)
 
 - **Frontend ↔ Backend:** The frontend calls the backend at `/api/*`. Base URL is set by `VITE_API_BASE_URL` (default `http://localhost:8080`).
