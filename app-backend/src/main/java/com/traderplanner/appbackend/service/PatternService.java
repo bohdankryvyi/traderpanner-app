@@ -79,6 +79,9 @@ public class PatternService {
             return cached.response();
         }
 
+        // Evict stale day keys on every cache miss so dailyCount never grows unbounded
+        evictStaleDailyCounts();
+
         List<SecurityDto> whitelist = securityService.findSecurities(null);
         if (whitelist.isEmpty()) {
             whitelist = List.of(new com.traderplanner.appbackend.dto.SecurityDto("AAPL", "Apple Inc", "Technology"));
@@ -160,9 +163,18 @@ public class PatternService {
     }
 
     /**
+     * Removes day keys other than today so {@link #dailyCount} does not grow unbounded over time.
+     */
+    private void evictStaleDailyCounts() {
+        String today = LocalDate.now(ZoneOffset.UTC).toString();
+        dailyCount.keySet().removeIf(key -> !today.equals(key));
+    }
+
+    /**
      * Fast path check (racy); real enforcement is {@link #tryReserveDailySlot()}.
      */
     private boolean dailyCountExceeded() {
+        evictStaleDailyCounts();
         String dayKey = LocalDate.now(ZoneOffset.UTC).toString();
         dailyCount.putIfAbsent(dayKey, new AtomicInteger(0));
         return dailyCount.get(dayKey).get() >= aiProperties.getMaxRequestsPerDay();
@@ -173,6 +185,7 @@ public class PatternService {
      * Call immediately before the OpenAI request so concurrent requests cannot exceed the limit.
      */
     private boolean tryReserveDailySlot() {
+        evictStaleDailyCounts();
         String dayKey = LocalDate.now(ZoneOffset.UTC).toString();
         AtomicInteger counter = dailyCount.computeIfAbsent(dayKey, k -> new AtomicInteger(0));
         int max = aiProperties.getMaxRequestsPerDay();
@@ -220,12 +233,17 @@ public class PatternService {
         return withData;
     }
 
+    /**
+     * Returns tickers allowed for OpenAI: when we have candle data, only tickers that pass
+     * the positive-momentum and moderate-volatility prefilter; when we have no candle data,
+     * returns all candidates (no validation possible).
+     */
     private List<String> allowedTickersFromCandidates(List<String> candidateTickers, List<TickerCandles> withCandles) {
-        if (withCandles.size() >= TOP_PREFILTER) {
-            List<TickerCandles> top = prefilterTop3(withCandles);
-            return top.stream().map(TickerCandles::ticker).toList();
+        if (withCandles.isEmpty()) {
+            return candidateTickers;
         }
-        return candidateTickers;
+        List<TickerCandles> filtered = prefilterTop3(withCandles);
+        return filtered.stream().map(TickerCandles::ticker).toList();
     }
 
     private List<TickerCandles> prefilterTop3(List<TickerCandles> withData) {
