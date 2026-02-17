@@ -101,7 +101,7 @@ public class PatternService {
             return cacheAndReturn(cacheKey, fallbackStrategy.buildFallback(timeframe, sorted, "fallback-rate-limit"), now);
         }
 
-        List<String> candidateTickers = buildCandidateTickers(sorted, timeframe);
+        List<String> candidateTickers = buildCandidateTickers(sorted);
         List<TickerCandles> withCandles = fetchCandlesForCandidates(candidateTickers, timeframe);
         List<String> allowedTickers = allowedTickersFromCandidates(candidateTickers, withCandles);
         boolean hasMarketData = !withCandles.isEmpty();
@@ -201,7 +201,10 @@ public class PatternService {
         return response;
     }
 
-    private List<String> buildCandidateTickers(List<SecurityDto> sorted, String timeframe) {
+    /**
+     * Builds candidate tickers by rotating the whitelist by UTC day (selection depends only on sorted list and epoch day).
+     */
+    private List<String> buildCandidateTickers(List<SecurityDto> sorted) {
         int size = sorted.size();
         long epochDay = LocalDate.now(ZoneOffset.UTC).toEpochDay();
         int offset = (int) Math.floorMod(epochDay, size);
