@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import axios from 'axios'
 import { api } from '../api/endpoints'
 import { getApiErrorMessage } from '../api/apiClient'
 import type { TradingEntryRequest, TradingEntryResponse } from '../api/types'
@@ -39,7 +38,7 @@ export function TradingRoute() {
   const [aiTimeframe, setAiTimeframe] = useState<'1h' | '1d'>('1h')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
-  const [aiPatternResult, setAiPatternResult] = useState<{ ticker: string; pattern: string; rationale: string; generatedAt: string } | null>(null)
+  const [aiPatternResult, setAiPatternResult] = useState<{ ticker: string; pattern: string; rationale: string; generatedAt: string; source?: string } | null>(null)
 
   async function load() {
     setLoading(true)
@@ -121,17 +120,9 @@ export function TradingRoute() {
     setAiPatternResult(null)
     try {
       const res = await api.ai.pattern(aiTimeframe)
-      setAiPatternResult({ ticker: res.ticker, pattern: res.pattern, rationale: res.rationale ?? '', generatedAt: res.generatedAt })
+      setAiPatternResult({ ticker: res.ticker, pattern: res.pattern, rationale: res.rationale ?? '', generatedAt: res.generatedAt, source: res.source })
     } catch (e: unknown) {
-      const msg = getApiErrorMessage(e)
-      const status = axios.isAxiosError(e) ? e.response?.status : undefined
-      if (msg.toUpperCase().includes('OPENAI_API_KEY')) {
-        setAiError(t('trading.ai.missingKey'))
-      } else if (status === 502) {
-        setAiError(t('trading.ai.unavailable') + ' ' + msg)
-      } else {
-        setAiError(msg)
-      }
+      setAiError(getApiErrorMessage(e))
     } finally {
       setAiLoading(false)
     }
@@ -242,8 +233,15 @@ export function TradingRoute() {
 
         {aiPatternResult ? (
           <div className="mt-4 rounded-md bg-slate-50 p-3 text-sm text-slate-800">
-            <div className="font-medium">
-              {t('trading.ai.bestSetup')}: {aiPatternResult.ticker} — {aiPatternResult.pattern}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-medium">
+                {t('trading.ai.bestSetup')}: {aiPatternResult.ticker} — {aiPatternResult.pattern}
+              </span>
+              {aiPatternResult.source?.startsWith('fallback') ? (
+                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800" title={aiPatternResult.source}>
+                  AI fallback
+                </span>
+              ) : null}
             </div>
             {aiPatternResult.rationale ? (
               <p className="mt-2 text-slate-700">{aiPatternResult.rationale}</p>

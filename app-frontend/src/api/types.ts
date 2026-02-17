@@ -64,6 +64,8 @@ export type PatternResponse = {
   pattern: string
   rationale: string
   generatedAt: string
+  /** e.g. "openai", "openai-no-market-data", "fallback", "fallback-rate-limit", "fallback-openai-error", "fallback-openai-invalid" */
+  source?: string
 }
 
 export type ApiErrorResponse = {

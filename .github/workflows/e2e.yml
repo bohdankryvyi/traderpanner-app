@@ -72,7 +72,7 @@ jobs:
           DB_PASSWORD: trader
           # Safe default in CI; avoids any environment timezone weirdness
           JAVA_TOOL_OPTIONS: -Duser.timezone=UTC
-          # AI is NOT used by tests, so keep it empty and don’t fail on missing secrets
+          # AI keys empty in CI; pattern endpoint returns 200 fallback, E2E unaffected
           OPENAI_API_KEY: ""
           ALPHAVANTAGE_API_KEY: ""
         run: |
@@ -151,6 +151,7 @@ jobs:
           path: e2e/playwright-report
           if-no-files-found: ignore
 
+      # App logs: backend/frontend stdout. No secrets are logged (API keys come from env and are not printed).
       - name: Upload logs (always)
         if: always()
         uses: actions/upload-artifact@v4

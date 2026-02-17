@@ -22,15 +22,24 @@ public class PatternResponse {
     @Schema(description = "When the analysis was generated", type = "string", format = "date-time")
     private OffsetDateTime generatedAt;
 
+    @Schema(description = "Source: openai, openai-no-market-data, or fallback* when using deterministic fallback")
+    private String source;
+
     public PatternResponse() {
     }
 
-    public PatternResponse(String timeframe, String ticker, String pattern, String rationale, OffsetDateTime generatedAt) {
+    public PatternResponse(String timeframe, String ticker, String pattern, String rationale, OffsetDateTime generatedAt, String source) {
         this.timeframe = timeframe;
         this.ticker = ticker;
         this.pattern = pattern;
         this.rationale = rationale;
         this.generatedAt = generatedAt;
+        this.source = source;
+    }
+
+    /** Convenience constructor with source defaulting to openai. */
+    public PatternResponse(String timeframe, String ticker, String pattern, String rationale, OffsetDateTime generatedAt) {
+        this(timeframe, ticker, pattern, rationale, generatedAt, "openai");
     }
 
     public String getTimeframe() {
@@ -71,5 +80,13 @@ public class PatternResponse {
 
     public void setGeneratedAt(OffsetDateTime generatedAt) {
         this.generatedAt = generatedAt;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 }
