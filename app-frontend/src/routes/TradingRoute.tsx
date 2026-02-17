@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import axios from 'axios'
 import { api } from '../api/endpoints'
 import { getApiErrorMessage } from '../api/apiClient'
 import type { TradingEntryRequest, TradingEntryResponse } from '../api/types'
@@ -123,15 +122,7 @@ export function TradingRoute() {
       const res = await api.ai.pattern(aiTimeframe)
       setAiPatternResult({ ticker: res.ticker, pattern: res.pattern, rationale: res.rationale ?? '', generatedAt: res.generatedAt, source: res.source })
     } catch (e: unknown) {
-      const msg = getApiErrorMessage(e)
-      const status = axios.isAxiosError(e) ? e.response?.status : undefined
-      if (msg.toUpperCase().includes('OPENAI_API_KEY')) {
-        setAiError(t('trading.ai.missingKey'))
-      } else if (status === 502) {
-        setAiError(t('trading.ai.unavailable') + ' ' + msg)
-      } else {
-        setAiError(msg)
-      }
+      setAiError(getApiErrorMessage(e))
     } finally {
       setAiLoading(false)
     }

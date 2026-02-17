@@ -93,6 +93,7 @@ public class PatternService {
             return cacheAndReturn(cacheKey, fallbackStrategy.buildFallback(timeframe, sorted, "fallback"), now);
         }
 
+        // Optional fast path: skip heavy work if we're already at limit (racy is ok; reserve is enforced below)
         if (dailyCountExceeded()) {
             return cacheAndReturn(cacheKey, fallbackStrategy.buildFallback(timeframe, sorted, "fallback-rate-limit"), now);
         }
@@ -101,6 +102,11 @@ public class PatternService {
         List<TickerCandles> withCandles = fetchCandlesForCandidates(candidateTickers, timeframe);
         List<String> allowedTickers = allowedTickersFromCandidates(candidateTickers, withCandles);
         boolean hasMarketData = !withCandles.isEmpty();
+
+        if (allowedTickers.isEmpty()) {
+            log.debug("No allowed tickers after prefilter (no positive momentum + moderate volatility); returning fallback");
+            return cacheAndReturn(cacheKey, fallbackStrategy.buildFallback(timeframe, sorted, "fallback"), now);
+        }
 
         // Only include candle data for allowed tickers so prompt and validation stay in sync
         List<TickerCandles> candlesForPrompt = withCandles.stream()
@@ -113,8 +119,12 @@ public class PatternService {
                 Map.of("role", "user", "content", userContent)
         );
 
+        // Atomic reserve: only allow up to maxRequestsPerDay to call OpenAI (closes race with concurrent requests)
+        if (!tryReserveDailySlot()) {
+            return cacheAndReturn(cacheKey, fallbackStrategy.buildFallback(timeframe, sorted, "fallback-rate-limit"), now);
+        }
+
         try {
-            incrementDailyCount();
             String content = openAiClient.chat(messages, openAiKey, aiProperties.getModel());
             JsonNode node = objectMapper.readTree(content);
             String ticker = node.path("ticker").asText(null);
@@ -149,16 +159,28 @@ public class PatternService {
         }
     }
 
+    /**
+     * Fast path check (racy); real enforcement is {@link #tryReserveDailySlot()}.
+     */
     private boolean dailyCountExceeded() {
         String dayKey = LocalDate.now(ZoneOffset.UTC).toString();
         dailyCount.putIfAbsent(dayKey, new AtomicInteger(0));
         return dailyCount.get(dayKey).get() >= aiProperties.getMaxRequestsPerDay();
     }
 
-    private void incrementDailyCount() {
+    /**
+     * Atomically reserves one slot for today if under maxRequestsPerDay. Returns true if reserved, false if limit reached.
+     * Call immediately before the OpenAI request so concurrent requests cannot exceed the limit.
+     */
+    private boolean tryReserveDailySlot() {
         String dayKey = LocalDate.now(ZoneOffset.UTC).toString();
-        dailyCount.putIfAbsent(dayKey, new AtomicInteger(0));
-        dailyCount.get(dayKey).incrementAndGet();
+        AtomicInteger counter = dailyCount.computeIfAbsent(dayKey, k -> new AtomicInteger(0));
+        int max = aiProperties.getMaxRequestsPerDay();
+        for (;;) {
+            int current = counter.get();
+            if (current >= max) return false;
+            if (counter.compareAndSet(current, current + 1)) return true;
+        }
     }
 
     private PatternResponse cacheAndReturn(String cacheKey, PatternResponse response, OffsetDateTime now) {
