@@ -172,12 +172,13 @@ public class PatternService {
 
     /**
      * Fast path check (racy); real enforcement is {@link #tryReserveDailySlot()}.
+     * Uses computeIfAbsent and holds the reference so evictStaleDailyCounts in another thread cannot remove the key and cause NPE.
      */
     private boolean dailyCountExceeded() {
         evictStaleDailyCounts();
         String dayKey = LocalDate.now(ZoneOffset.UTC).toString();
-        dailyCount.putIfAbsent(dayKey, new AtomicInteger(0));
-        return dailyCount.get(dayKey).get() >= aiProperties.getMaxRequestsPerDay();
+        AtomicInteger counter = dailyCount.computeIfAbsent(dayKey, k -> new AtomicInteger(0));
+        return counter.get() >= aiProperties.getMaxRequestsPerDay();
     }
 
     /**
