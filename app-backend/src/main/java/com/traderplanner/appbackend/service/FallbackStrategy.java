@@ -29,8 +29,9 @@ public class FallbackStrategy {
     };
 
     /**
-     * Build a deterministic fallback response. Ticker is chosen from whitelist by (dayOfYear + tfHash) % size;
-     * pattern rotates by same seed.
+     * Build a deterministic fallback response. Ticker and pattern are chosen from a single seed (day + timeframe)
+     * using remainder and quotient so that (ticker, pattern) gets full combinatorial variety instead of
+     * being limited to LCM(tickerCount, patternCount) when both used the same modulus.
      */
     public PatternResponse buildFallback(String timeframe, List<SecurityDto> whitelist, String source) {
         String tf = "1d".equalsIgnoreCase(timeframe) ? "1d" : "1h";
@@ -45,7 +46,7 @@ public class FallbackStrategy {
         int tfHash = "1d".equals(tf) ? 1 : 0;
         int seed = dayOfYear * 2 + tfHash;
         int tickerIdx = Math.floorMod(seed, tickers.size());
-        int patternIdx = Math.floorMod(seed, ALLOWED_PATTERNS.length);
+        int patternIdx = Math.floorMod(seed / tickers.size(), ALLOWED_PATTERNS.length);
         String ticker = tickers.get(tickerIdx);
         String pattern = ALLOWED_PATTERNS[patternIdx];
         String rationale = "Deterministic fallback selection (no AI). Consider setting OPENAI_API_KEY for live analysis.";
