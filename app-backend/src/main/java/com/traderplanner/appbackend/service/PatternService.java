@@ -102,7 +102,12 @@ public class PatternService {
         List<String> allowedTickers = allowedTickersFromCandidates(candidateTickers, withCandles);
         boolean hasMarketData = !withCandles.isEmpty();
 
-        String userContent = buildUserMessage(timeframe, allowedTickers, withCandles);
+        // Only include candle data for allowed tickers so prompt and validation stay in sync
+        List<TickerCandles> candlesForPrompt = withCandles.stream()
+                .filter(tc -> allowedTickers.stream().anyMatch(t -> t.equalsIgnoreCase(tc.ticker())))
+                .toList();
+
+        String userContent = buildUserMessage(timeframe, allowedTickers, candlesForPrompt);
         List<Map<String, String>> messages = List.of(
                 Map.of("role", "system", "content", SYSTEM_PROMPT),
                 Map.of("role", "user", "content", userContent)
