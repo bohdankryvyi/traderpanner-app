@@ -6,7 +6,6 @@ import com.traderplanner.appbackend.config.AiProperties;
 import com.traderplanner.appbackend.dto.PatternResponse;
 import com.traderplanner.appbackend.dto.SecurityDto;
 import com.traderplanner.appbackend.exception.BadRequestException;
-import com.traderplanner.appbackend.exception.ServiceUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,6 +21,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,144 +34,173 @@ public class PatternService {
     private static final int MIN_CANDLES = 10;
     private static final int CANDLES_1H = 30;
     private static final int CANDLES_1D = 60;
-    /** Volatility (std of returns) must be in this range to be "moderate". */
     private static final double VOL_MIN = 0.0005;
     private static final double VOL_MAX = 0.05;
+    private static final int RATIONALE_MIN = 20;
+    private static final int RATIONALE_MAX = 600;
+
+    private static final String SYSTEM_PROMPT = "You are a technical analysis expert. Return ONLY valid JSON. No markdown, no code fences. "
+            + "JSON must have exactly these keys: \"timeframe\" (\"1h\" or \"1d\"), \"ticker\" (must be one of the tickers provided), "
+            + "\"pattern\" (exactly one of: Ascending Triangle, Descending Triangle, Bull Flag, Bear Flag, Cup and Handle, Double Bottom, Double Top, Falling Wedge, Rising Wedge, Head and Shoulders), "
+            + "\"rationale\" (2-4 sentences, 20-600 characters).";
 
     private final SecurityService securityService;
     private final MarketDataProvider marketDataProvider;
     private final OpenAiClient openAiClient;
     private final AiProperties aiProperties;
+    private final FallbackStrategy fallbackStrategy;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final Map<String, CachedPattern> cache = new ConcurrentHashMap<>();
+    private final Map<String, AtomicInteger> dailyCount = new ConcurrentHashMap<>();
 
     public PatternService(SecurityService securityService,
-                         MarketDataProvider marketDataProvider,
-                         OpenAiClient openAiClient,
-                         AiProperties aiProperties) {
+                          MarketDataProvider marketDataProvider,
+                          OpenAiClient openAiClient,
+                          AiProperties aiProperties,
+                          FallbackStrategy fallbackStrategy) {
         this.securityService = securityService;
         this.marketDataProvider = marketDataProvider;
         this.openAiClient = openAiClient;
         this.aiProperties = aiProperties;
+        this.fallbackStrategy = fallbackStrategy;
     }
 
     public PatternResponse getPattern(String tf) {
-        String openAiKey = System.getenv("OPENAI_API_KEY");
-        if (openAiKey == null || openAiKey.isBlank()) {
-            throw new BadRequestException("OPENAI_API_KEY is not configured");
-        }
-        String avKey = System.getenv("ALPHAVANTAGE_API_KEY");
-        if (avKey == null || avKey.isBlank()) {
-            throw new ServiceUnavailableException("Market data provider is not configured (ALPHAVANTAGE_API_KEY)");
-        }
         if (!"1h".equalsIgnoreCase(tf) && !"1d".equalsIgnoreCase(tf)) {
             throw new BadRequestException("Unsupported timeframe: " + tf + " (expected 1h or 1d)");
         }
-
-        String cacheKey = "pattern|" + tf.toLowerCase();
-        CachedPattern cached = cache.get(cacheKey);
+        String timeframe = tf.toLowerCase();
         OffsetDateTime now = OffsetDateTime.now();
+
+        String cacheKey = "pattern|" + timeframe;
+        CachedPattern cached = cache.get(cacheKey);
         if (cached != null && ChronoUnit.MINUTES.between(cached.generatedAt(), now) < aiProperties.getCacheTtlMinutes()) {
             return cached.response();
         }
 
         List<SecurityDto> whitelist = securityService.findSecurities(null);
         if (whitelist.isEmpty()) {
-            throw new ServiceUnavailableException("No securities in whitelist");
+            whitelist = List.of(new com.traderplanner.appbackend.dto.SecurityDto("AAPL", "Apple Inc", "Technology"));
         }
-        List<SecurityDto> sorted = whitelist.stream()
-                .sorted(Comparator.comparing(SecurityDto::getTicker))
-                .toList();
-        int whitelistSize = sorted.size();
-        long epochDay = LocalDate.now(ZoneOffset.UTC).toEpochDay();
-        int offset = (int) Math.floorMod(epochDay, whitelistSize);
-        List<String> tickersToFetch = new ArrayList<>();
-        for (int i = 0; i < MAX_TICKERS_FETCH; i++) {
-            int idx = (offset + i) % whitelistSize;
-            tickersToFetch.add(sorted.get(idx).getTicker());
+        List<SecurityDto> sorted = whitelist.stream().sorted(Comparator.comparing(SecurityDto::getTicker)).toList();
+
+        String openAiKey = System.getenv("OPENAI_API_KEY");
+        if (openAiKey == null || openAiKey.isBlank()) {
+            return cacheAndReturn(cacheKey, fallbackStrategy.buildFallback(timeframe, sorted, "fallback"), now);
         }
-        if (log.isDebugEnabled()) {
-            log.debug("Candidate tickers (day offset={}): {}", offset, tickersToFetch);
+        if (!aiProperties.isEnabled()) {
+            return cacheAndReturn(cacheKey, fallbackStrategy.buildFallback(timeframe, sorted, "fallback"), now);
         }
 
+        if (dailyCountExceeded()) {
+            return cacheAndReturn(cacheKey, fallbackStrategy.buildFallback(timeframe, sorted, "fallback-rate-limit"), now);
+        }
+
+        List<String> candidateTickers = buildCandidateTickers(sorted, timeframe);
+        List<TickerCandles> withCandles = fetchCandlesForCandidates(candidateTickers, timeframe);
+        List<String> allowedTickers = allowedTickersFromCandidates(candidateTickers, withCandles);
+        boolean hasMarketData = !withCandles.isEmpty();
+
+        String userContent = buildUserMessage(timeframe, allowedTickers, withCandles);
+        List<Map<String, String>> messages = List.of(
+                Map.of("role", "system", "content", SYSTEM_PROMPT),
+                Map.of("role", "user", "content", userContent)
+        );
+
+        try {
+            incrementDailyCount();
+            String content = openAiClient.chat(messages, openAiKey, aiProperties.getModel());
+            JsonNode node = objectMapper.readTree(content);
+            String ticker = node.path("ticker").asText(null);
+            String pattern = node.path("pattern").asText(null);
+            String rationale = node.path("rationale").asText(null);
+            if (ticker == null || ticker.isBlank() || pattern == null || pattern.isBlank() || rationale == null || rationale.isBlank()) {
+                log.debug("OpenAI response missing required fields");
+                return cacheAndReturn(cacheKey, fallbackStrategy.buildFallback(timeframe, sorted, "fallback-openai-invalid"), now);
+            }
+            String tickerUpper = ticker.trim().toUpperCase();
+            if (!allowedTickers.stream().anyMatch(t -> t.equalsIgnoreCase(tickerUpper))) {
+                log.debug("OpenAI ticker not in whitelist: {}", tickerUpper);
+                return cacheAndReturn(cacheKey, fallbackStrategy.buildFallback(timeframe, sorted, "fallback-openai-invalid"), now);
+            }
+            if (!FallbackStrategy.isAllowedPattern(pattern)) {
+                log.debug("OpenAI pattern not allowed: {}", pattern);
+                return cacheAndReturn(cacheKey, fallbackStrategy.buildFallback(timeframe, sorted, "fallback-openai-invalid"), now);
+            }
+            int len = rationale.trim().length();
+            if (len < RATIONALE_MIN || len > RATIONALE_MAX) {
+                log.debug("OpenAI rationale length invalid: {}", len);
+                return cacheAndReturn(cacheKey, fallbackStrategy.buildFallback(timeframe, sorted, "fallback-openai-invalid"), now);
+            }
+            String source = hasMarketData ? "openai" : "openai-no-market-data";
+            PatternResponse response = new PatternResponse(timeframe, tickerUpper, normalizePattern(pattern), rationale.trim(), now, source);
+            return cacheAndReturn(cacheKey, response, now);
+        } catch (Exception e) {
+            log.warn("OpenAI call failed: {}", e.getMessage(), e);
+            PatternResponse fallback = fallbackStrategy.buildFallback(timeframe, sorted, "fallback-openai-error");
+            fallback.setRationale("AI unavailable, showing fallback.");
+            return cacheAndReturn(cacheKey, fallback, now);
+        }
+    }
+
+    private boolean dailyCountExceeded() {
+        String dayKey = LocalDate.now(ZoneOffset.UTC).toString();
+        dailyCount.putIfAbsent(dayKey, new AtomicInteger(0));
+        return dailyCount.get(dayKey).get() >= aiProperties.getMaxRequestsPerDay();
+    }
+
+    private void incrementDailyCount() {
+        String dayKey = LocalDate.now(ZoneOffset.UTC).toString();
+        dailyCount.putIfAbsent(dayKey, new AtomicInteger(0));
+        dailyCount.get(dayKey).incrementAndGet();
+    }
+
+    private PatternResponse cacheAndReturn(String cacheKey, PatternResponse response, OffsetDateTime now) {
+        cache.put(cacheKey, new CachedPattern(response, now));
+        return response;
+    }
+
+    private List<String> buildCandidateTickers(List<SecurityDto> sorted, String timeframe) {
+        int size = sorted.size();
+        long epochDay = LocalDate.now(ZoneOffset.UTC).toEpochDay();
+        int offset = (int) Math.floorMod(epochDay, size);
+        List<String> out = new ArrayList<>();
+        for (int i = 0; i < MAX_TICKERS_FETCH; i++) {
+            int idx = (offset + i) % size;
+            out.add(sorted.get(idx).getTicker());
+        }
+        return out;
+    }
+
+    private List<TickerCandles> fetchCandlesForCandidates(List<String> tickers, String tf) {
         List<TickerCandles> withData = new ArrayList<>();
-        for (int i = 0; i < tickersToFetch.size(); i++) {
+        for (int i = 0; i < tickers.size(); i++) {
             if (i > 0) {
                 try {
                     Thread.sleep(DELAY_MS);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    throw new ServiceUnavailableException("Interrupted while fetching market data", e);
+                    break;
                 }
             }
-            String ticker = tickersToFetch.get(i);
+            String ticker = tickers.get(i);
             List<Candle> candles = marketDataProvider.getCandles(ticker, tf);
             if (candles != null && candles.size() >= MIN_CANDLES) {
                 withData.add(new TickerCandles(ticker, candles));
-                if (log.isDebugEnabled()) {
-                    log.debug("Fetched candles for {} tf={} bars={}", ticker, tf, candles.size());
-                }
             }
         }
-
-        if (withData.isEmpty()) {
-            log.debug("No OHLC data for any ticker; rate limit or network");
-            throw new ServiceUnavailableException("Market data fetch failed. Check ALPHAVANTAGE_API_KEY and rate limits.");
-        }
-
-        List<TickerCandles> top3 = prefilterTop3(withData);
-        if (top3.size() < TOP_PREFILTER) {
-            throw new ServiceUnavailableException("Not enough market data to analyze right now.");
-        }
-
-        List<String> allowedTickers = top3.stream().map(TickerCandles::ticker).toList();
-        if (log.isDebugEnabled()) {
-            log.debug("Top 3 candidates for OpenAI: {}", allowedTickers);
-        }
-
-        int nCandles = "1h".equalsIgnoreCase(tf) ? CANDLES_1H : CANDLES_1D;
-        String userContent = buildUserMessage(tf, top3, nCandles);
-        String systemContent = "You are a technical analysis expert. Output ONLY valid JSON with exactly these keys: \"timeframe\" (\"1h\" or \"1d\"), \"ticker\" (must be one of the 3 tickers provided), \"pattern\" (exactly one of: ascending triangle, descending triangle, bull flag, bear flag, double bottom, double top, range breakout forming), \"rationale\" (2-4 sentences referencing the given candles). No other text or keys.";
-        List<Map<String, String>> messages = List.of(
-                Map.of("role", "system", "content", systemContent),
-                Map.of("role", "user", "content", userContent)
-        );
-
-        String content;
-        try {
-            content = openAiClient.chat(messages, openAiKey);
-        } catch (Exception e) {
-            log.debug("OpenAI call failed: {}", e.getMessage());
-            throw new ServiceUnavailableException("AI unavailable: " + e.getMessage(), e);
-        }
-
-        JsonNode node;
-        try {
-            node = objectMapper.readTree(content);
-        } catch (Exception e) {
-            log.debug("OpenAI response not valid JSON");
-            throw new ServiceUnavailableException("AI returned invalid response.");
-        }
-        String ticker = node.path("ticker").asText(null);
-        String pattern = node.path("pattern").asText(null);
-        String rationale = node.path("rationale").asText(null);
-        if (ticker == null || ticker.isBlank() || pattern == null || pattern.isBlank() || rationale == null || rationale.isBlank()) {
-            throw new ServiceUnavailableException("AI returned invalid response.");
-        }
-        String tickerUpper = ticker.trim().toUpperCase();
-        if (!allowedTickers.stream().anyMatch(t -> t.equalsIgnoreCase(tickerUpper))) {
-            throw new ServiceUnavailableException("AI returned invalid response.");
-        }
-
-        PatternResponse response = new PatternResponse(tf.toLowerCase(), tickerUpper, pattern.trim(), rationale.trim(), now);
-        cache.put(cacheKey, new CachedPattern(response, now));
-        return response;
+        return withData;
     }
 
-    /**
-     * Filter: positive momentum and moderate volatility. Sort by volatility (prefer middle), take top 3.
-     */
+    private List<String> allowedTickersFromCandidates(List<String> candidateTickers, List<TickerCandles> withCandles) {
+        if (withCandles.size() >= TOP_PREFILTER) {
+            List<TickerCandles> top = prefilterTop3(withCandles);
+            return top.stream().map(TickerCandles::ticker).toList();
+        }
+        return candidateTickers;
+    }
+
     private List<TickerCandles> prefilterTop3(List<TickerCandles> withData) {
         List<Scored> scored = new ArrayList<>();
         for (TickerCandles tc : withData) {
@@ -187,7 +216,7 @@ public class PatternService {
             scored.add(new Scored(tc, vol, momentum));
         }
         return scored.stream()
-                .sorted(Comparator.comparingDouble((Scored s) -> Math.abs(s.volatility() - (VOL_MIN + VOL_MAX) / 2))) // prefer middle volatility
+                .sorted(Comparator.comparingDouble((Scored s) -> Math.abs(s.volatility() - (VOL_MIN + VOL_MAX) / 2)))
                 .limit(TOP_PREFILTER)
                 .map(Scored::tickerCandles)
                 .toList();
@@ -209,22 +238,35 @@ public class PatternService {
         return n > 0 ? Math.sqrt(sum / n) : 0;
     }
 
-    private String buildUserMessage(String tf, List<TickerCandles> top3, int nCandles) {
+    private String buildUserMessage(String tf, List<String> allowedTickers, List<TickerCandles> withCandles) {
         StringBuilder sb = new StringBuilder();
         sb.append("Timeframe: ").append(tf).append("\n\n");
-        sb.append("For each ticker, last ").append(nCandles).append(" candles as [timestamp, open, high, low, close]. Pick the single best ticker and one pattern from the list. Return JSON only.\n\n");
-        for (TickerCandles tc : top3) {
-            List<Candle> list = tc.candles();
-            int from = Math.max(0, list.size() - nCandles);
-            list = list.subList(from, list.size());
-            sb.append("Ticker: ").append(tc.ticker()).append("\n");
-            sb.append("Candles: ");
-            sb.append(list.stream()
-                    .map(c -> String.format("[%s,%s,%s,%s,%s]", c.t(), c.o(), c.h(), c.l(), c.c()))
-                    .collect(Collectors.joining(", ")));
-            sb.append("\n\n");
+        sb.append("Candidate tickers: ").append(String.join(", ", allowedTickers)).append("\n\n");
+        int nCandles = "1d".equalsIgnoreCase(tf) ? CANDLES_1D : CANDLES_1H;
+        if (!withCandles.isEmpty()) {
+            sb.append("Last ").append(nCandles).append(" candles per ticker [timestamp, open, high, low, close]. Pick the single best ticker and one pattern from the allowed list. Return JSON only.\n\n");
+            for (TickerCandles tc : withCandles) {
+                List<Candle> list = tc.candles();
+                int from = Math.max(0, list.size() - nCandles);
+                list = list.subList(from, list.size());
+                sb.append("Ticker: ").append(tc.ticker()).append("\n");
+                sb.append("Candles: ");
+                sb.append(list.stream()
+                        .map(c -> String.format("[%s,%s,%s,%s,%s]", c.t(), c.o(), c.h(), c.l(), c.c()))
+                        .collect(Collectors.joining(", ")));
+                sb.append("\n\n");
+            }
+        } else {
+            sb.append("No candle data available. Choose the single best ticker from the candidate list and one pattern. Return JSON only.");
         }
         return sb.toString();
+    }
+
+    private static String normalizePattern(String pattern) {
+        for (String p : FallbackStrategy.getAllowedPatterns()) {
+            if (p.equalsIgnoreCase(pattern.trim())) return p;
+        }
+        return pattern.trim();
     }
 
     private record TickerCandles(String ticker, List<Candle> candles) {}

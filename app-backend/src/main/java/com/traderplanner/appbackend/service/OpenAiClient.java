@@ -27,20 +27,22 @@ public class OpenAiClient {
     /**
      * Send chat completion request with JSON mode. Returns the content of the first choice.
      * Does not log the API key.
+     * @param model e.g. gpt-4o-mini
      */
-    public String chat(List<Map<String, String>> messages, String apiKey) {
+    public String chat(List<Map<String, String>> messages, String apiKey, String model) {
         if (apiKey == null || apiKey.isBlank()) {
             throw new IllegalArgumentException("OpenAI API key is required");
         }
+        String effectiveModel = (model != null && !model.isBlank()) ? model : "gpt-4o-mini";
         try {
             Map<String, Object> body = Map.of(
-                    "model", "gpt-4o-mini",
+                    "model", effectiveModel,
                     "messages", messages,
                     "response_format", Map.of("type", "json_object")
             );
             String bodyJson = objectMapper.writeValueAsString(body);
             if (log.isDebugEnabled()) {
-                log.debug("OpenAI request model=gpt-4o-mini messages={}", messages.size());
+                log.debug("OpenAI request model={} messages={}", effectiveModel, messages.size());
             }
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(CHAT_URL))

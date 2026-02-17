@@ -137,33 +137,66 @@ npx playwright test --headed
 
 - **AI (Analyze now):**
   - Endpoint: `POST /api/ai/pattern?tf=1h|1d`
-  - Requires `OPENAI_API_KEY` and `ALPHAVANTAGE_API_KEY`. If `OPENAI_API_KEY` is missing → **400** with message "OPENAI_API_KEY is not configured". If the market data provider is not configured (`ALPHAVANTAGE_API_KEY` missing) or unavailable (e.g. rate limit) → **502** with an informative message.
-  - Success (200): JSON with `timeframe`, `ticker`, `pattern`, `rationale`, `generatedAt`.
-  - Results are cached per timeframe for `ai.cacheTtlMinutes` to reduce external API calls.
+  - **Always returns 200.** If `OPENAI_API_KEY` is missing or invalid, or rate limit exceeded, or OpenAI errors, the backend returns a deterministic fallback result (same JSON shape with `source` indicating fallback). The app keeps working without keys.
+  - Response: `timeframe`, `ticker`, `pattern`, `rationale`, `generatedAt`, `source`. `source` is one of: `openai`, `openai-no-market-data`, `fallback`, `fallback-rate-limit`, `fallback-openai-error`, `fallback-openai-invalid`.
+  - Results are cached per timeframe for `ai.cacheTtlMinutes`. Cache hits do not consume the daily request limit.
+  - Optional: `ALPHAVANTAGE_API_KEY` for OHLC data; when missing or rate-limited, OpenAI is still called with reduced context and `source` may be `openai-no-market-data`.
 
 ## Environment variables
 
+**Secrets:** Set all keys and passwords via environment variables or a local `.env` file. Never commit `.env` or paste real keys into the repo or docs.
+
 **Backend** (from environment only):
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` — PostgreSQL connection (defaults in application.yml if unset)
-- `OPENAI_API_KEY` — required for AI pattern endpoint (missing → 400)
-- `ALPHAVANTAGE_API_KEY` — required for OHLC/pattern and optional for price quotes (missing/unavailable → 502 for pattern)
+- `OPENAI_API_KEY` — used for AI pattern analysis when set; if missing, endpoint returns 200 with fallback (no error)
+- `ALPHAVANTAGE_API_KEY` — optional; used for OHLC/market data in pattern analysis and for price quotes (missing → mock prices / pattern without candles)
 
 **Frontend:**
 - `VITE_API_BASE_URL` — backend base URL (default `http://localhost:8080`)
 
-Example files: repo root `.env.example` (DB + backend), `app-frontend/.env.example` (frontend).
+Example files: repo root `.env.example` (DB + backend), `app-frontend/.env.example` (frontend). Copy these to `.env` and set values locally; **do not commit `.env` or real API keys.**
+
+## Running AI locally and on CI
+
+- **Local (with OpenAI):** Set `OPENAI_API_KEY` via environment (or a local `.env` that is **not** committed). Optionally set `ALPHAVANTAGE_API_KEY` for candle data.
+- **Windows PowerShell — per session (use your own key; never commit it):**
+  ```powershell
+  $env:OPENAI_API_KEY = "<your-openai-key>"
+  $env:ALPHAVANTAGE_API_KEY = "<optional-alpha-vantage-key>"
+  cd app-backend
+  .\mvnw.cmd spring-boot:run
+  ```
+- **Windows PowerShell — persist for current user (optional):** Use `[System.Environment]::SetEnvironmentVariable("OPENAI_API_KEY", "<your-key>", "User")` and re-read in new terminals with `$env:OPENAI_API_KEY = [System.Environment]::GetEnvironmentVariable("OPENAI_API_KEY","User")`. Never commit keys.
+- **CI (GitHub Actions):** E2E workflow leaves `OPENAI_API_KEY` and `ALPHAVANTAGE_API_KEY` empty. The backend must not fail; the pattern endpoint returns 200 with a fallback result, so tests are unaffected.
+
+**Backend AI config** (`application.yml` / `ai.*`):
+- `ai.enabled` — default `true`; when false, pattern still returns fallback
+- `ai.cacheTtlMinutes` — cache TTL for pattern (and tips)
+- `ai.maxRequestsPerDay` — simple in-memory daily cap on actual OpenAI calls (default 10); exceeding returns fallback
+- `ai.model` — OpenAI model (default `gpt-4o-mini`)
+
+Free-tier limits and the daily limiter: OpenAI and Alpha Vantage have rate/cost limits; the app limits how many times per day it calls OpenAI (`ai.maxRequestsPerDay`) to stay within a small budget.
 
 ## Test pattern endpoint (curl)
 
-Requires backend running with `OPENAI_API_KEY` and `ALPHAVANTAGE_API_KEY` set.
+Backend running (keys optional; no keys → fallback 200).
 
 ```bash
 curl -X POST "http://localhost:8080/api/ai/pattern?tf=1d" -H "Content-Type: application/json"
 ```
 
-Example 200 response:
+Example 200 with OpenAI:
 ```json
-{"timeframe":"1d","ticker":"AAPL","pattern":"Ascending Triangle","rationale":"Price has formed higher lows with a flat top...","generatedAt":"2025-02-06T12:00:00Z"}
+{"timeframe":"1d","ticker":"AAPL","pattern":"Ascending Triangle","rationale":"Price has formed higher lows...","generatedAt":"2025-02-06T12:00:00Z","source":"openai"}
 ```
 
-**Alpha Vantage rate limits:** The app fetches OHLC for at most 5 tickers per analyze. Candidates rotate daily (UTC day offset into the sorted whitelist, wrap-around), with a short delay between requests, to stay within the free tier.
+Example 200 fallback (no key or rate limit):
+```json
+{"timeframe":"1d","ticker":"MSFT","pattern":"Bull Flag","rationale":"Deterministic fallback selection (no AI)...","generatedAt":"2025-02-06T12:00:00Z","source":"fallback"}
+```
+
+```bash
+curl -X POST "http://localhost:8080/api/ai/pattern?tf=1h" -H "Content-Type: application/json"
+```
+
+**Alpha Vantage:** When configured, the app fetches OHLC for a few tickers per analyze (candidates rotate by UTC day). Without it, pattern analysis still runs using the ticker whitelist only.

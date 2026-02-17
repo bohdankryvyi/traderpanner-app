@@ -38,12 +38,31 @@ Thumbs.db
 ehthumbs.db
 desktop.ini
 
-# Env / local overrides
+# Env / local overrides (never commit .env; copy .env.example and fill locally)
 .env
 .env.local
 .env.*.local
+!*.env.example
+!.env.example
+
+# E2E / Playwright
+e2e/playwright-report/
+e2e/test-results/
+e2e/blob-report/
+e2e/playwright/.cache/
+e2e/traces/
+e2e/videos/
+e2e/screenshots/
 
 # E2E/run scripts logs and PIDs
+logs/
 logs/*.log
 logs/*.pid
+backend.log
+frontend.log
+app-backend/backend.log
+app-frontend/frontend.log
+*.pid
+app-backend/*.pid
+app-frontend/*.pid
 

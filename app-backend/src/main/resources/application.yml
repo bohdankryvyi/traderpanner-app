@@ -27,5 +27,8 @@ fx:
   eurToUsd: 1.10
 
 ai:
+  enabled: true
   cacheTtlMinutes: 30
+  maxRequestsPerDay: 10
+  model: gpt-4o-mini
 
