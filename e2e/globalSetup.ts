@@ -8,13 +8,17 @@ import { waitForHttpOk } from './src/utils/preflight'
 const FRONTEND_TIMEOUT_MS = 45_000
 const FRONTEND_INTERVAL_MS = 1_500
 
-const BACKEND_ENDPOINTS: Array<{ path: string; label: string; bodyOk?: (text: string) => boolean }> = [
-  { path: '/actuator/health', label: 'actuator/health', bodyOk: (t) => t.includes('"status":"UP"') },
-  { path: '/swagger-ui/index.html', label: 'swagger-ui/index.html' },
-  { path: '/api/portfolio', label: 'api/portfolio' },
-  { path: '/api/trading', label: 'api/trading' },
+const BACKEND_ENDPOINTS: Array<{
+  path: string
+  label: string
+  timeoutMs: number
+  bodyOk?: (text: string) => boolean
+}> = [
+  { path: '/actuator/health', label: 'actuator/health', timeoutMs: 15_000, bodyOk: (t) => t.includes('"status":"UP"') },
+  { path: '/swagger-ui/index.html', label: 'swagger-ui/index.html', timeoutMs: 10_000 },
+  { path: '/api/portfolio', label: 'api/portfolio', timeoutMs: 10_000 },
+  { path: '/api/trading', label: 'api/trading', timeoutMs: 10_000 },
 ]
-const BACKEND_TIMEOUTS_MS = [15_000, 10_000, 10_000, 10_000]
 const BACKEND_INTERVAL_MS = 1_500
 
 async function checkFrontend(): Promise<void> {
@@ -40,10 +44,8 @@ async function checkBackend(): Promise<void> {
   const apiBase = getApiBaseURL()
   const errors: Array<{ endpoint: string; error: string }> = []
 
-  for (let i = 0; i < BACKEND_ENDPOINTS.length; i++) {
-    const { path, label, bodyOk } = BACKEND_ENDPOINTS[i]
+  for (const { path, label, timeoutMs, bodyOk } of BACKEND_ENDPOINTS) {
     const url = `${apiBase}${path}`
-    const timeoutMs = BACKEND_TIMEOUTS_MS[i]
     try {
       await waitForHttpOk({
         url,
