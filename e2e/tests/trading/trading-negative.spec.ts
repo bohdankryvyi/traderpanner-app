@@ -1,5 +1,7 @@
 import { test, expect } from '../../src/fixtures/baseFixture'
 import { tradingNegativeCases } from '../../src/data/datasets/tradingCases'
+import { getCountWithPrefix } from '../../src/utils/prefixCount'
+import type { TradingEntryResponse } from '../../src/api/types'
 
 const caseNames = tradingNegativeCases('_').map((c) => c.name)
 
@@ -11,13 +13,19 @@ for (const name of caseNames) {
     await tradingPage.goto()
     await tradingPage.expectValidationErrorNotVisible()
 
-    const listBefore = (await tradingApi.getListResponse()).body
-    const beforePrefixCount = listBefore.filter((e) => (e.note ?? '').startsWith(prefix)).length
+    const countBefore = await getCountWithPrefix<TradingEntryResponse>(
+      () => tradingApi.getListResponse(),
+      prefix,
+      (e) => e.note ?? ''
+    )
     await tradingPage.createEntry(data)
     await tradingPage.expectValidationErrorVisible()
     await tradingApi.assertNoEntryWithNote(data.note)
-    const listAfter = (await tradingApi.getListResponse()).body
-    const afterPrefixCount = listAfter.filter((e) => (e.note ?? '').startsWith(prefix)).length
-    expect(afterPrefixCount).toBe(beforePrefixCount)
+    const countAfter = await getCountWithPrefix<TradingEntryResponse>(
+      () => tradingApi.getListResponse(),
+      prefix,
+      (e) => e.note ?? ''
+    )
+    expect(countAfter).toBe(countBefore)
   })
 }
