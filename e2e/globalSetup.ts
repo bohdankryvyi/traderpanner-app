@@ -34,7 +34,7 @@ async function checkFrontend(): Promise<void> {
     const msg = e instanceof Error ? e.message : String(e)
     throw new Error(
       `${msg}\n\n` +
-        `Frontend must be running. Set E2E_BASE_URL or PLAYWRIGHT_BASE_URL if not using default (http://localhost:5173).\n` +
+        `Frontend must be running. Set E2E_BASE_URL, PLAYWRIGHT_BASE_URL, or BASE_URL if not using default (http://localhost:5173).\n` +
         `Check the terminal where the frontend dev server is running.`
     )
   }

@@ -41,7 +41,7 @@ E2E URLs are **env-based** so you can override defaults (e.g. different ports or
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
-| `E2E_BASE_URL` or `PLAYWRIGHT_BASE_URL` | Frontend base URL (Playwright `baseURL`) | `http://localhost:5173` |
+| `E2E_BASE_URL`, `PLAYWRIGHT_BASE_URL`, or `BASE_URL` | Frontend base URL (Playwright `baseURL`) | `http://localhost:5173` |
 | `E2E_API_BASE_URL` or `API_BASE_URL` | Backend API base URL (used by e2e API client) | `http://localhost:8080` |
 
 - **playwright.config.ts** uses `getBaseURL()` from `src/config/env.ts` for `baseURL`.
@@ -59,7 +59,7 @@ npx playwright test
 Before any test runs, **globalSetup** (`globalSetup.ts`) runs a readiness check so tests fail fast with a clear error instead of many `ECONNREFUSED` timeouts.
 
 - **Playwright** runs `globalSetup: './globalSetup.ts'` once before the test run.
-- **Frontend:** GET `baseURL` until 2xx (retry loop with timeout). If it never responds, you get an error telling you to start the frontend and how to set `E2E_BASE_URL` / `PLAYWRIGHT_BASE_URL`.
+- **Frontend:** GET `baseURL` until 2xx (retry loop with timeout). If it never responds, you get an error telling you to start the frontend and how to set `E2E_BASE_URL`, `PLAYWRIGHT_BASE_URL`, or `BASE_URL`.
 - **Backend:** Tries endpoints in order and stops on **first success**:
   1. `GET {apiBase}/actuator/health` — must return 200 and body containing `"status":"UP"`.
   2. `GET {apiBase}/swagger-ui/index.html` — 200.

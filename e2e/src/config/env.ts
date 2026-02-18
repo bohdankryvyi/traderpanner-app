@@ -5,7 +5,12 @@ const DEFAULT_BASE_URL = 'http://localhost:5173'
 const DEFAULT_API_BASE_URL = 'http://localhost:8080'
 
 export function getBaseURL(): string {
-  return process.env.E2E_BASE_URL ?? process.env.PLAYWRIGHT_BASE_URL ?? DEFAULT_BASE_URL
+  return (
+    process.env.E2E_BASE_URL ??
+    process.env.PLAYWRIGHT_BASE_URL ??
+    process.env.BASE_URL ??
+    DEFAULT_BASE_URL
+  )
 }
 
 export function getApiBaseURL(): string {
