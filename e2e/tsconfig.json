@@ -8,5 +8,5 @@
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "include": ["tests/**/*.ts", "src/**/*.ts", "playwright.config.ts"]
+  "include": ["tests/**/*.ts", "src/**/*.ts", "playwright.config.ts","globalSetup.ts"]
 }

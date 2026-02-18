@@ -28,4 +28,3 @@ export function setLanguage(lang: 'en' | 'ua') {
 }
 
 export default i18n
-

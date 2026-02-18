@@ -6,43 +6,42 @@ import java.time.OffsetDateTime;
 
 public class AiTipsResponse {
 
-    private String timeframe;
-    private String tipsText;
+	private String timeframe;
+	private String tipsText;
 
-    @Schema(description = "When the tips were generated", type = "string", format = "date-time", example = "2025-01-01T12:00:00Z")
-    private OffsetDateTime generatedAt;
+	@Schema(description = "When the tips were generated", type = "string", format = "date-time", example = "2025-01-01T12:00:00Z")
+	private OffsetDateTime generatedAt;
 
-    public AiTipsResponse() {
-    }
+	public AiTipsResponse() {
+	}
 
-    public AiTipsResponse(String timeframe, String tipsText, OffsetDateTime generatedAt) {
-        this.timeframe = timeframe;
-        this.tipsText = tipsText;
-        this.generatedAt = generatedAt;
-    }
+	public AiTipsResponse(String timeframe, String tipsText, OffsetDateTime generatedAt) {
+		this.timeframe = timeframe;
+		this.tipsText = tipsText;
+		this.generatedAt = generatedAt;
+	}
 
-    public String getTimeframe() {
-        return timeframe;
-    }
+	public String getTimeframe() {
+		return timeframe;
+	}
 
-    public void setTimeframe(String timeframe) {
-        this.timeframe = timeframe;
-    }
+	public void setTimeframe(String timeframe) {
+		this.timeframe = timeframe;
+	}
 
-    public String getTipsText() {
-        return tipsText;
-    }
+	public String getTipsText() {
+		return tipsText;
+	}
 
-    public void setTipsText(String tipsText) {
-        this.tipsText = tipsText;
-    }
+	public void setTipsText(String tipsText) {
+		this.tipsText = tipsText;
+	}
 
-    public OffsetDateTime getGeneratedAt() {
-        return generatedAt;
-    }
+	public OffsetDateTime getGeneratedAt() {
+		return generatedAt;
+	}
 
-    public void setGeneratedAt(OffsetDateTime generatedAt) {
-        this.generatedAt = generatedAt;
-    }
+	public void setGeneratedAt(OffsetDateTime generatedAt) {
+		this.generatedAt = generatedAt;
+	}
 }
-

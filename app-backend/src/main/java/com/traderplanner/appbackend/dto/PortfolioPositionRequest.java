@@ -9,97 +9,96 @@ import java.math.BigDecimal;
 
 public class PortfolioPositionRequest {
 
-    @NotBlank
-    @Size(max = 255)
-    private String sector;
+	@NotBlank
+	@Size(max = 255)
+	private String sector;
 
-    @NotBlank
-    @Size(max = 255)
-    private String company;
+	@NotBlank
+	@Size(max = 255)
+	private String company;
 
-    @NotBlank
-    @Size(max = 32)
-    private String ticker;
+	@NotBlank
+	@Size(max = 32)
+	private String ticker;
 
-    @NotNull
-    @DecimalMin(value = "0.0", inclusive = false)
-    private BigDecimal buyPrice;
+	@NotNull
+	@DecimalMin(value = "0.0", inclusive = false)
+	private BigDecimal buyPrice;
 
-    @DecimalMin(value = "0.0", inclusive = false)
-    private BigDecimal targetPrice;
+	@DecimalMin(value = "0.0", inclusive = false)
+	private BigDecimal targetPrice;
 
-    @NotNull
-    @DecimalMin(value = "0.0", inclusive = false)
-    private BigDecimal quantity;
+	@NotNull
+	@DecimalMin(value = "0.0", inclusive = false)
+	private BigDecimal quantity;
 
-    @NotBlank
-    @Size(max = 3)
-    private String currency;
+	@NotBlank
+	@Size(max = 3)
+	private String currency;
 
-    private String notes;
+	private String notes;
 
-    public String getSector() {
-        return sector;
-    }
+	public String getSector() {
+		return sector;
+	}
 
-    public void setSector(String sector) {
-        this.sector = sector;
-    }
+	public void setSector(String sector) {
+		this.sector = sector;
+	}
 
-    public String getCompany() {
-        return company;
-    }
+	public String getCompany() {
+		return company;
+	}
 
-    public void setCompany(String company) {
-        this.company = company;
-    }
+	public void setCompany(String company) {
+		this.company = company;
+	}
 
-    public String getTicker() {
-        return ticker;
-    }
+	public String getTicker() {
+		return ticker;
+	}
 
-    public void setTicker(String ticker) {
-        this.ticker = ticker;
-    }
+	public void setTicker(String ticker) {
+		this.ticker = ticker;
+	}
 
-    public BigDecimal getBuyPrice() {
-        return buyPrice;
-    }
+	public BigDecimal getBuyPrice() {
+		return buyPrice;
+	}
 
-    public void setBuyPrice(BigDecimal buyPrice) {
-        this.buyPrice = buyPrice;
-    }
+	public void setBuyPrice(BigDecimal buyPrice) {
+		this.buyPrice = buyPrice;
+	}
 
-    public BigDecimal getTargetPrice() {
-        return targetPrice;
-    }
+	public BigDecimal getTargetPrice() {
+		return targetPrice;
+	}
 
-    public void setTargetPrice(BigDecimal targetPrice) {
-        this.targetPrice = targetPrice;
-    }
+	public void setTargetPrice(BigDecimal targetPrice) {
+		this.targetPrice = targetPrice;
+	}
 
-    public BigDecimal getQuantity() {
-        return quantity;
-    }
+	public BigDecimal getQuantity() {
+		return quantity;
+	}
 
-    public void setQuantity(BigDecimal quantity) {
-        this.quantity = quantity;
-    }
+	public void setQuantity(BigDecimal quantity) {
+		this.quantity = quantity;
+	}
 
-    public String getCurrency() {
-        return currency;
-    }
+	public String getCurrency() {
+		return currency;
+	}
 
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
+	public void setCurrency(String currency) {
+		this.currency = currency;
+	}
 
-    public String getNotes() {
-        return notes;
-    }
+	public String getNotes() {
+		return notes;
+	}
 
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
+	public void setNotes(String notes) {
+		this.notes = notes;
+	}
 }
-

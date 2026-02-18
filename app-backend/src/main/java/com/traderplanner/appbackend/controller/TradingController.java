@@ -16,37 +16,35 @@ import java.util.List;
 @Tag(name = "Trading")
 public class TradingController {
 
-    private final TradingService tradingService;
+	private final TradingService tradingService;
 
-    public TradingController(TradingService tradingService) {
-        this.tradingService = tradingService;
-    }
+	public TradingController(TradingService tradingService) {
+		this.tradingService = tradingService;
+	}
 
-    @GetMapping
-    @Operation(summary = "List trading entries with current prices")
-    public List<TradingEntryResponse> list() {
-        return tradingService.getAll();
-    }
+	@GetMapping
+	@Operation(summary = "List trading entries with current prices")
+	public List<TradingEntryResponse> list() {
+		return tradingService.getAll();
+	}
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create trading entry")
-    public TradingEntryResponse create(@Valid @RequestBody TradingEntryRequest request) {
-        return tradingService.create(request);
-    }
+	@PostMapping
+	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "Create trading entry")
+	public TradingEntryResponse create(@Valid @RequestBody TradingEntryRequest request) {
+		return tradingService.create(request);
+	}
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Update trading entry")
-    public TradingEntryResponse update(@PathVariable("id") Long id,
-                                       @Valid @RequestBody TradingEntryRequest request) {
-        return tradingService.update(id, request);
-    }
+	@PutMapping("/{id}")
+	@Operation(summary = "Update trading entry")
+	public TradingEntryResponse update(@PathVariable("id") Long id, @Valid @RequestBody TradingEntryRequest request) {
+		return tradingService.update(id, request);
+	}
 
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Delete trading entry")
-    public void delete(@PathVariable("id") Long id) {
-        tradingService.delete(id);
-    }
+	@DeleteMapping("/{id}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(summary = "Delete trading entry")
+	public void delete(@PathVariable("id") Long id) {
+		tradingService.delete(id);
+	}
 }
-

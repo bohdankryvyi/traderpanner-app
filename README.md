@@ -44,6 +44,25 @@ Infra (local):
 - Git
 - Docker Desktop + WSL2
 
+## Install dependencies
+
+- **Backend:** none (Maven wrapper in `app-backend`).
+- **Frontend:** `cd app-frontend && npm install`
+- **E2E:** `cd e2e && npm install && npx playwright install`
+- **Root (for lint/format from root):** `npm install` in both `app-frontend` and `e2e` (no root install required; root scripts use `--prefix`).
+
+## Lint and format (repo-wide)
+
+From repo root (after installing deps in app-frontend and e2e):
+
+- **Lint (frontend + e2e):** `npm run lint`
+- **Format (apply):** `npm run format`
+- **Format (check only):** `npm run format:check`
+- **Backend format (apply):** `npm run format:backend` — runs `./mvnw spotless:apply` in app-backend (on Windows use `cd app-backend && mvnw.cmd spotless:apply` if needed).
+- **Backend format (check):** `npm run format:check:backend` — runs `./mvnw spotless:check` in app-backend.
+
+Shared style: Prettier for TS (semi: false, singleQuote: true, printWidth: 100). Backend: Spotless with Eclipse JDT formatter.
+
 ## Local run
 
 ### One-command run (Postgres + backend + frontend + E2E)
@@ -153,6 +172,10 @@ npx playwright test --headed
 
 **Frontend:**
 - `VITE_API_BASE_URL` — backend base URL (default `http://localhost:8080`)
+
+**E2E** (optional; defaults work for local):
+- `E2E_BASE_URL` — frontend URL (default `http://localhost:5173`)
+- `E2E_API_URL` — backend API URL (default `http://localhost:8080`)
 
 Example files: repo root `.env.example` (DB + backend), `app-frontend/.env.example` (frontend). Copy these to `.env` and set values locally; **do not commit `.env` or real API keys.**
 

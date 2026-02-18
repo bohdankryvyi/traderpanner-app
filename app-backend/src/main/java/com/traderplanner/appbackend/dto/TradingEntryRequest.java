@@ -8,37 +8,36 @@ import java.math.BigDecimal;
 
 public class TradingEntryRequest {
 
-    @NotBlank
-    @Size(max = 32)
-    private String ticker;
+	@NotBlank
+	@Size(max = 32)
+	private String ticker;
 
-    private String note;
+	private String note;
 
-    @DecimalMin(value = "0.0", inclusive = false)
-    private BigDecimal entryPrice;
+	@DecimalMin(value = "0.0", inclusive = false)
+	private BigDecimal entryPrice;
 
-    public String getTicker() {
-        return ticker;
-    }
+	public String getTicker() {
+		return ticker;
+	}
 
-    public void setTicker(String ticker) {
-        this.ticker = ticker;
-    }
+	public void setTicker(String ticker) {
+		this.ticker = ticker;
+	}
 
-    public String getNote() {
-        return note;
-    }
+	public String getNote() {
+		return note;
+	}
 
-    public void setNote(String note) {
-        this.note = note;
-    }
+	public void setNote(String note) {
+		this.note = note;
+	}
 
-    public BigDecimal getEntryPrice() {
-        return entryPrice;
-    }
+	public BigDecimal getEntryPrice() {
+		return entryPrice;
+	}
 
-    public void setEntryPrice(BigDecimal entryPrice) {
-        this.entryPrice = entryPrice;
-    }
+	public void setEntryPrice(BigDecimal entryPrice) {
+		this.entryPrice = entryPrice;
+	}
 }
-

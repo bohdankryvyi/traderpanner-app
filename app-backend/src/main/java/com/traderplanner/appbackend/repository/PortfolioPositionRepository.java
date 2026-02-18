@@ -5,4 +5,3 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PortfolioPositionRepository extends JpaRepository<PortfolioPosition, Long> {
 }
-

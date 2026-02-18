@@ -16,16 +16,15 @@ import java.util.List;
 @Tag(name = "Securities")
 public class SecurityController {
 
-    private final SecurityService securityService;
+	private final SecurityService securityService;
 
-    public SecurityController(SecurityService securityService) {
-        this.securityService = securityService;
-    }
+	public SecurityController(SecurityService securityService) {
+		this.securityService = securityService;
+	}
 
-    @GetMapping
-    @Operation(summary = "List securities", description = "Optionally filter by ticker or company using q parameter")
-    public List<SecurityDto> list(@RequestParam(name = "q", required = false) String query) {
-        return securityService.findSecurities(query);
-    }
+	@GetMapping
+	@Operation(summary = "List securities", description = "Optionally filter by ticker or company using q parameter")
+	public List<SecurityDto> list(@RequestParam(name = "q", required = false) String query) {
+		return securityService.findSecurities(query);
+	}
 }
-

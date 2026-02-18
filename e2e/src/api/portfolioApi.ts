@@ -32,7 +32,8 @@ export function createPortfolioApi(api: ApiClient) {
       const list = await this.listPortfolio()
       const trimmed = notes.trim()
       const found = list.some((p) => (p.notes ?? '').trim() === trimmed)
-      if (found) throw new Error(`Expected no portfolio position with notes "${notes}" but found one`)
+      if (found)
+        throw new Error(`Expected no portfolio position with notes "${notes}" but found one`)
     },
 
     async assertNoPositionsWithPrefix(prefix: string): Promise<void> {

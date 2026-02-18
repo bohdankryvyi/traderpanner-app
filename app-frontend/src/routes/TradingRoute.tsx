@@ -38,7 +38,13 @@ export function TradingRoute() {
   const [aiTimeframe, setAiTimeframe] = useState<'1h' | '1d'>('1h')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
-  const [aiPatternResult, setAiPatternResult] = useState<{ ticker: string; pattern: string; rationale: string; generatedAt: string; source?: string } | null>(null)
+  const [aiPatternResult, setAiPatternResult] = useState<{
+    ticker: string
+    pattern: string
+    rationale: string
+    generatedAt: string
+    source?: string
+  } | null>(null)
 
   async function load() {
     setLoading(true)
@@ -120,7 +126,13 @@ export function TradingRoute() {
     setAiPatternResult(null)
     try {
       const res = await api.ai.pattern(aiTimeframe)
-      setAiPatternResult({ ticker: res.ticker, pattern: res.pattern, rationale: res.rationale ?? '', generatedAt: res.generatedAt, source: res.source })
+      setAiPatternResult({
+        ticker: res.ticker,
+        pattern: res.pattern,
+        rationale: res.rationale ?? '',
+        generatedAt: res.generatedAt,
+        source: res.source,
+      })
     } catch (e: unknown) {
       setAiError(getApiErrorMessage(e))
     } finally {
@@ -132,24 +144,39 @@ export function TradingRoute() {
     () => [
       { header: t('trading.table.ticker'), render: (r) => r.ticker },
       { header: t('trading.table.note'), render: (r) => r.note ?? '—' },
-      { header: t('trading.table.entryPrice'), render: (r) => (r.entryPrice != null ? r.entryPrice : '—') },
+      {
+        header: t('trading.table.entryPrice'),
+        render: (r) => (r.entryPrice != null ? r.entryPrice : '—'),
+      },
       { header: t('trading.table.currentPriceUsd'), render: (r) => r.currentPriceUsd },
       {
         header: t('trading.table.actions'),
         className: 'text-right',
         render: (r) => (
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" className="px-3 py-1.5" data-testid="trading-row-edit" onClick={() => onEdit(r)}>
+            <Button
+              type="button"
+              variant="secondary"
+              className="px-3 py-1.5"
+              data-testid="trading-row-edit"
+              onClick={() => onEdit(r)}
+            >
               {t('common.edit')}
             </Button>
-            <Button type="button" variant="danger" className="px-3 py-1.5" data-testid="trading-row-delete" onClick={() => onDelete(r.id)}>
+            <Button
+              type="button"
+              variant="danger"
+              className="px-3 py-1.5"
+              data-testid="trading-row-delete"
+              onClick={() => onDelete(r.id)}
+            >
               {t('common.delete')}
             </Button>
           </div>
         ),
       },
     ],
-    [t],
+    [t]
   )
 
   return (
@@ -188,7 +215,11 @@ export function TradingRoute() {
           />
         </div>
 
-        {formError ? <div className="mt-3 text-sm text-rose-700" data-testid="trading-form-error">{formError}</div> : null}
+        {formError ? (
+          <div className="mt-3 text-sm text-rose-700" data-testid="trading-form-error">
+            {formError}
+          </div>
+        ) : null}
 
         <div className="mt-4 flex gap-2">
           <Button type="button" data-testid="trading-form-submit" onClick={onSubmit}>
@@ -210,7 +241,12 @@ export function TradingRoute() {
 
       {loading ? <div className="text-sm text-slate-600">{t('common.loading')}</div> : null}
 
-      <Table columns={columns} rows={rows} rowKey={(r) => String(r.id)} rowTestId={(r) => `trading-row-${r.id}`} />
+      <Table
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => String(r.id)}
+        rowTestId={(r) => `trading-row-${r.id}`}
+      />
 
       <div className="rounded-lg border border-slate-200 bg-white p-4">
         <div className="mb-3 text-base font-semibold">{t('trading.ai.title')}</div>
@@ -238,7 +274,10 @@ export function TradingRoute() {
                 {t('trading.ai.bestSetup')}: {aiPatternResult.ticker} — {aiPatternResult.pattern}
               </span>
               {aiPatternResult.source?.startsWith('fallback') ? (
-                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800" title={aiPatternResult.source}>
+                <span
+                  className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800"
+                  title={aiPatternResult.source}
+                >
                   AI fallback
                 </span>
               ) : null}
@@ -255,4 +294,3 @@ export function TradingRoute() {
     </div>
   )
 }
-

@@ -8,15 +8,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class SecuritiesSeedConfig {
 
-    private final SecurityService securityService;
+	private final SecurityService securityService;
 
-    public SecuritiesSeedConfig(SecurityService securityService) {
-        this.securityService = securityService;
-    }
+	public SecuritiesSeedConfig(SecurityService securityService) {
+		this.securityService = securityService;
+	}
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void seedSecurities() {
-        securityService.seedFromCsvIfNeeded();
-    }
+	@EventListener(ApplicationReadyEvent.class)
+	public void seedSecurities() {
+		securityService.seedFromCsvIfNeeded();
+	}
 }
-

@@ -19,4 +19,3 @@ export function Input({
     </label>
   )
 }
-

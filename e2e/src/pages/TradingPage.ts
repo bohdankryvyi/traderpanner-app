@@ -31,15 +31,22 @@ export class TradingPage {
   }
 
   async editById(id: number, data: Partial<TradingEntryFormData>): Promise<void> {
-    await this.page.getByTestId('trading-row-' + id).getByTestId('trading-row-edit').click()
+    await this.page
+      .getByTestId('trading-row-' + id)
+      .getByTestId('trading-row-edit')
+      .click()
     if (data.ticker != null) await this.page.getByTestId('trading-ticker').fill(data.ticker)
     if (data.note != null) await this.page.getByTestId('trading-note').fill(data.note)
-    if (data.entryPrice != null) await this.page.getByTestId('trading-entry-price').fill(data.entryPrice)
+    if (data.entryPrice != null)
+      await this.page.getByTestId('trading-entry-price').fill(data.entryPrice)
     await this.page.getByTestId('trading-form-submit').click()
   }
 
   async deleteById(id: number): Promise<void> {
-    await this.page.getByTestId('trading-row-' + id).getByTestId('trading-row-delete').click()
+    await this.page
+      .getByTestId('trading-row-' + id)
+      .getByTestId('trading-row-delete')
+      .click()
   }
 
   async expectValidationErrorNotVisible(): Promise<void> {
@@ -53,7 +60,11 @@ export class TradingPage {
     const locator = this.page.getByTestId(FORM_ERROR_TESTID)
     const count = await locator.count()
     if (count === 0) {
-      throw new Error('expectValidationErrorVisible failed: no element with data-testid=' + FORM_ERROR_TESTID + ' found in DOM')
+      throw new Error(
+        'expectValidationErrorVisible failed: no element with data-testid=' +
+          FORM_ERROR_TESTID +
+          ' found in DOM'
+      )
     }
     await expect(locator.first()).toBeVisible()
   }

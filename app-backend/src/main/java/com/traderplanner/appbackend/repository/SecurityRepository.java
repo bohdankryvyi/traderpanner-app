@@ -7,8 +7,7 @@ import java.util.List;
 
 public interface SecurityRepository extends JpaRepository<Security, String> {
 
-    List<Security> findByTickerContainingIgnoreCaseOrCompanyContainingIgnoreCase(String ticker, String company);
+	List<Security> findByTickerContainingIgnoreCaseOrCompanyContainingIgnoreCase(String ticker, String company);
 
-    boolean existsByTickerIgnoreCase(String ticker);
+	boolean existsByTickerIgnoreCase(String ticker);
 }
-

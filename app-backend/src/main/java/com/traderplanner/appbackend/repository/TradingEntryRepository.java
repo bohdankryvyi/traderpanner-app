@@ -5,4 +5,3 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TradingEntryRepository extends JpaRepository<TradingEntry, Long> {
 }
-

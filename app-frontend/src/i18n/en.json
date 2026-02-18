@@ -83,4 +83,3 @@
     "text": "This MVP uses mock market prices from the backend (no external market data). AI tips are optional and require OPENAI_API_KEY configured in the backend environment."
   }
 }
-

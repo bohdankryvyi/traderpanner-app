@@ -7,16 +7,30 @@ import { portfolioPositionBuilder } from '../builders/portfolioPositionBuilder'
 export const portfolioValidDefault = (prefix?: string): PortfolioPositionFormData =>
   portfolioPositionBuilder({}, prefix)
 
+export type PortfolioNegativeCase = {
+  name: string
+  build: (prefix: string) => PortfolioPositionFormData
+}
+
 /**
  * Negative cases: mandatory fields only (sector, company, ticker, buyPrice, quantity per DTO).
- * Each case has unique notes with prefix for API assertion.
+ * Use case.build(prefix) once per test to get unique notes; no need to call builder twice or find by name.
  */
-export function portfolioNegativeCases(prefix: string): Array<{ name: string; data: PortfolioPositionFormData }> {
+export function portfolioNegativeCases(): PortfolioNegativeCase[] {
   return [
-    { name: 'missing sector', data: portfolioPositionBuilder({ sector: '' }, prefix) },
-    { name: 'missing company', data: portfolioPositionBuilder({ company: '' }, prefix) },
-    { name: 'missing ticker', data: portfolioPositionBuilder({ ticker: '' }, prefix) },
-    { name: 'missing buyPrice', data: portfolioPositionBuilder({ buyPrice: '' }, prefix) },
-    { name: 'missing quantity', data: portfolioPositionBuilder({ quantity: '' }, prefix) },
+    { name: 'missing sector', build: (prefix) => portfolioPositionBuilder({ sector: '' }, prefix) },
+    {
+      name: 'missing company',
+      build: (prefix) => portfolioPositionBuilder({ company: '' }, prefix),
+    },
+    { name: 'missing ticker', build: (prefix) => portfolioPositionBuilder({ ticker: '' }, prefix) },
+    {
+      name: 'missing buyPrice',
+      build: (prefix) => portfolioPositionBuilder({ buyPrice: '' }, prefix),
+    },
+    {
+      name: 'missing quantity',
+      build: (prefix) => portfolioPositionBuilder({ quantity: '' }, prefix),
+    },
   ]
 }

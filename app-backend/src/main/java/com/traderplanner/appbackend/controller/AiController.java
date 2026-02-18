@@ -18,26 +18,25 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "AI")
 public class AiController {
 
-    private final AiTipsService aiTipsService;
-    private final PatternService patternService;
+	private final AiTipsService aiTipsService;
+	private final PatternService patternService;
 
-    public AiController(AiTipsService aiTipsService, PatternService patternService) {
-        this.aiTipsService = aiTipsService;
-        this.patternService = patternService;
-    }
+	public AiController(AiTipsService aiTipsService, PatternService patternService) {
+		this.aiTipsService = aiTipsService;
+		this.patternService = patternService;
+	}
 
-    @PostMapping("/tips")
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "Get AI trading tips", description = "timeframe param tf=1h|1d; uses cached tips for ai.cacheTtlMinutes")
-    public AiTipsResponse getTips(@RequestParam("tf") String timeframe) {
-        return aiTipsService.getTips(timeframe);
-    }
+	@PostMapping("/tips")
+	@ResponseStatus(HttpStatus.OK)
+	@Operation(summary = "Get AI trading tips", description = "timeframe param tf=1h|1d; uses cached tips for ai.cacheTtlMinutes")
+	public AiTipsResponse getTips(@RequestParam("tf") String timeframe) {
+		return aiTipsService.getTips(timeframe);
+	}
 
-    @PostMapping("/pattern")
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "Analyze now – single best ticker and pattern", description = "POST with tf=1h|1d. Returns ticker and technical pattern from OpenAI using real OHLC data.")
-    public PatternResponse getPattern(@RequestParam("tf") String timeframe) {
-        return patternService.getPattern(timeframe);
-    }
+	@PostMapping("/pattern")
+	@ResponseStatus(HttpStatus.OK)
+	@Operation(summary = "Analyze now – single best ticker and pattern", description = "POST with tf=1h|1d. Returns ticker and technical pattern from OpenAI using real OHLC data.")
+	public PatternResponse getPattern(@RequestParam("tf") String timeframe) {
+		return patternService.getPattern(timeframe);
+	}
 }
-

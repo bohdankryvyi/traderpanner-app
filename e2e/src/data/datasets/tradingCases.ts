@@ -4,16 +4,22 @@ import { tradingEntryBuilder } from '../builders/tradingEntryBuilder'
 /**
  * Valid default for CRUD. Entry price is optional; only ticker is required.
  */
-export const tradingValidDefault = (prefix?: string): TradingEntryFormData => tradingEntryBuilder({}, prefix)
+export const tradingValidDefault = (prefix?: string): TradingEntryFormData =>
+  tradingEntryBuilder({}, prefix)
+
+export type TradingNegativeCase = {
+  name: string
+  build: (prefix: string) => TradingEntryFormData
+}
 
 /**
- * Negative cases: mandatory fields only (ticker required). Each case has a unique note with prefix for API assertion.
+ * Negative cases: mandatory fields only (ticker required). Use case.build(prefix) once per test.
  */
-export function tradingNegativeCases(prefix: string): Array<{ name: string; data: TradingEntryFormData }> {
+export function tradingNegativeCases(): TradingNegativeCase[] {
   return [
     {
       name: 'missing required ticker',
-      data: tradingEntryBuilder({ ticker: '' }, prefix),
+      build: (prefix) => tradingEntryBuilder({ ticker: '' }, prefix),
     },
   ]
 }

@@ -1,0 +1,13 @@
+{
+  "name": "traderpanner-app",
+  "private": true,
+  "description": "TraderPlanner monorepo (backend, frontend, e2e)",
+  "scripts": {
+    "lint": "npm run lint --prefix app-frontend && npm run lint --prefix e2e",
+    "format": "npm run format --prefix app-frontend && npm run format --prefix e2e",
+    "format:check": "npm run format:check --prefix app-frontend && npm run format:check --prefix e2e",
+    "lint:backend": "cd app-backend && ./mvnw spotless:check",
+    "format:backend": "cd app-backend && ./mvnw spotless:apply",
+    "format:check:backend": "cd app-backend && ./mvnw spotless:check"
+  }
+}

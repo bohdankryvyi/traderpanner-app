@@ -158,7 +158,10 @@ export function PortfolioRoute() {
       { header: t('portfolio.table.ticker'), render: (r) => r.ticker },
       { header: t('portfolio.table.currency'), render: (r) => r.currency },
       { header: t('portfolio.table.buyPrice'), render: (r) => r.buyPrice },
-      { header: t('portfolio.table.targetPrice'), render: (r) => (r.targetPrice == null ? '—' : r.targetPrice) },
+      {
+        header: t('portfolio.table.targetPrice'),
+        render: (r) => (r.targetPrice == null ? '—' : r.targetPrice),
+      },
       { header: t('portfolio.table.quantity'), render: (r) => r.quantity },
       { header: t('portfolio.table.notes'), render: (r) => r.notes ?? '—' },
       { header: t('portfolio.table.currentPriceUsd'), render: (r) => num(r.currentPriceUsd) },
@@ -172,17 +175,29 @@ export function PortfolioRoute() {
         className: 'text-right',
         render: (r) => (
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" className="px-3 py-1.5" data-testid="portfolio-row-edit" onClick={() => onEdit(r)}>
+            <Button
+              type="button"
+              variant="secondary"
+              className="px-3 py-1.5"
+              data-testid="portfolio-row-edit"
+              onClick={() => onEdit(r)}
+            >
               {t('common.edit')}
             </Button>
-            <Button type="button" variant="danger" className="px-3 py-1.5" data-testid="portfolio-row-delete" onClick={() => onDelete(r.id)}>
+            <Button
+              type="button"
+              variant="danger"
+              className="px-3 py-1.5"
+              data-testid="portfolio-row-delete"
+              onClick={() => onDelete(r.id)}
+            >
               {t('common.delete')}
             </Button>
           </div>
         ),
       },
     ],
-    [t],
+    [t]
   )
 
   return (
@@ -257,7 +272,11 @@ export function PortfolioRoute() {
           />
         </div>
 
-        {formError ? <div className="mt-3 text-sm text-rose-700" data-testid="portfolio-form-error">{formError}</div> : null}
+        {formError ? (
+          <div className="mt-3 text-sm text-rose-700" data-testid="portfolio-form-error">
+            {formError}
+          </div>
+        ) : null}
 
         <div className="mt-4 flex gap-2">
           <Button type="button" data-testid="portfolio-form-submit" onClick={onSubmit}>
@@ -279,8 +298,12 @@ export function PortfolioRoute() {
 
       {loading ? <div className="text-sm text-slate-600">{t('common.loading')}</div> : null}
 
-      <Table columns={columns} rows={rows} rowKey={(r) => String(r.id)} rowTestId={(r) => `portfolio-row-${r.id}`} />
+      <Table
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => String(r.id)}
+        rowTestId={(r) => `portfolio-row-${r.id}`}
+      />
     </div>
   )
 }
-

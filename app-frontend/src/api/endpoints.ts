@@ -13,7 +13,9 @@ import type {
 export const api = {
   securities: {
     list: async (q?: string): Promise<SecurityDto[]> => {
-      const res = await apiClient.get<SecurityDto[]>('/api/securities', { params: q ? { q } : undefined })
+      const res = await apiClient.get<SecurityDto[]>('/api/securities', {
+        params: q ? { q } : undefined,
+      })
       return res.data
     },
   },
@@ -43,7 +45,10 @@ export const api = {
       const res = await apiClient.post<PortfolioPositionResponse>('/api/portfolio', payload)
       return res.data
     },
-    update: async (id: number, payload: PortfolioPositionRequest): Promise<PortfolioPositionResponse> => {
+    update: async (
+      id: number,
+      payload: PortfolioPositionRequest
+    ): Promise<PortfolioPositionResponse> => {
       const res = await apiClient.put<PortfolioPositionResponse>(`/api/portfolio/${id}`, payload)
       return res.data
     },
@@ -53,7 +58,9 @@ export const api = {
   },
   prices: {
     get: async (tickers: string[]): Promise<PricesResponse> => {
-      const res = await apiClient.get<PricesResponse>('/api/prices', { params: { tickers: tickers.join(',') } })
+      const res = await apiClient.get<PricesResponse>('/api/prices', {
+        params: { tickers: tickers.join(',') },
+      })
       return res.data
     },
   },
@@ -68,4 +75,3 @@ export const api = {
     },
   },
 }
-

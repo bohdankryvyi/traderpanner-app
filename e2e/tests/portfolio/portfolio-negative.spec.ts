@@ -1,23 +1,46 @@
 import { test, expect } from '../../src/fixtures/baseFixture'
 import { portfolioNegativeCases } from '../../src/data/datasets/portfolioCases'
+import { buildE2EPrefix } from '../../src/utils/e2ePrefix'
+import { countByPrefix } from '../../src/utils/prefixCount'
+import { DOMAIN_PORTFOLIO } from '../../src/constants/e2e'
+import type { PortfolioPositionResponse } from '../../src/api/types'
 
-const caseNames = portfolioNegativeCases('_').map((c) => c.name)
+const cases = portfolioNegativeCases()
 
-for (const name of caseNames) {
-  test(`Portfolio negative: ${name}`, async ({ portfolioPage, portfolioApi }, testInfo) => {
-    const prefix = `E2E|portfolio|w${testInfo.workerIndex}|`
-    const { data } = portfolioNegativeCases(prefix).find((c) => c.name === name)!
-    await portfolioApi.deleteE2EPortfolioAndVerify(prefix)
-    await portfolioPage.goto()
-    await portfolioPage.expectValidationErrorNotVisible()
+test.describe('Portfolio @portfolio', () => {
+  for (const negCase of cases) {
+    test(`negative: ${negCase.name} @negative`, async ({
+      portfolioPage,
+      portfolioApi,
+    }, testInfo) => {
+      const prefix = buildE2EPrefix(DOMAIN_PORTFOLIO, testInfo)
+      const data = negCase.build(prefix)
 
-    const listBefore = (await portfolioApi.getListResponse()).body
-    const beforePrefixCount = listBefore.filter((p) => (p.notes ?? '').startsWith(prefix)).length
-    await portfolioPage.createPosition(data)
-    await portfolioPage.expectValidationErrorVisible()
-    await portfolioApi.assertNoPositionWithNotes(data.notes)
-    const listAfter = (await portfolioApi.getListResponse()).body
-    const afterPrefixCount = listAfter.filter((p) => (p.notes ?? '').startsWith(prefix)).length
-    expect(afterPrefixCount).toBe(beforePrefixCount)
-  })
-}
+      await test.step('Arrange: cleanup and open form', async () => {
+        await portfolioApi.deleteE2EPortfolioAndVerify(prefix)
+        await portfolioPage.goto()
+        await portfolioPage.expectValidationErrorNotVisible()
+      })
+
+      const countBefore = await test.step('Act: get count before submit', () =>
+        countByPrefix<PortfolioPositionResponse>(
+          () => portfolioApi.getListResponse(),
+          prefix,
+          (p) => p.notes ?? ''
+        ))
+
+      await test.step('Act: submit invalid data', () => portfolioPage.createPosition(data))
+
+      await test.step('Assert: validation visible and no position created', async () => {
+        await portfolioPage.expectValidationErrorVisible()
+        await portfolioApi.assertNoPositionWithNotes(data.notes)
+        const countAfter = await countByPrefix<PortfolioPositionResponse>(
+          () => portfolioApi.getListResponse(),
+          prefix,
+          (p) => p.notes ?? ''
+        )
+        expect(countAfter).toBe(countBefore)
+      })
+    })
+  }
+})

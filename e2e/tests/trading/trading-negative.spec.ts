@@ -1,23 +1,43 @@
 import { test, expect } from '../../src/fixtures/baseFixture'
 import { tradingNegativeCases } from '../../src/data/datasets/tradingCases'
+import { buildE2EPrefix } from '../../src/utils/e2ePrefix'
+import { countByPrefix } from '../../src/utils/prefixCount'
+import { DOMAIN_TRADING } from '../../src/constants/e2e'
+import type { TradingEntryResponse } from '../../src/api/types'
 
-const caseNames = tradingNegativeCases('_').map((c) => c.name)
+const cases = tradingNegativeCases()
 
-for (const name of caseNames) {
-  test(`Trading negative: ${name}`, async ({ tradingPage, tradingApi }, testInfo) => {
-    const prefix = `E2E|trading|w${testInfo.workerIndex}|`
-    const { data } = tradingNegativeCases(prefix).find((c) => c.name === name)!
-    await tradingApi.deleteE2ETradingAndVerify(prefix)
-    await tradingPage.goto()
-    await tradingPage.expectValidationErrorNotVisible()
+test.describe('Trading @trading', () => {
+  for (const negCase of cases) {
+    test(`negative: ${negCase.name} @negative`, async ({ tradingPage, tradingApi }, testInfo) => {
+      const prefix = buildE2EPrefix(DOMAIN_TRADING, testInfo)
+      const data = negCase.build(prefix)
 
-    const listBefore = (await tradingApi.getListResponse()).body
-    const beforePrefixCount = listBefore.filter((e) => (e.note ?? '').startsWith(prefix)).length
-    await tradingPage.createEntry(data)
-    await tradingPage.expectValidationErrorVisible()
-    await tradingApi.assertNoEntryWithNote(data.note)
-    const listAfter = (await tradingApi.getListResponse()).body
-    const afterPrefixCount = listAfter.filter((e) => (e.note ?? '').startsWith(prefix)).length
-    expect(afterPrefixCount).toBe(beforePrefixCount)
-  })
-}
+      await test.step('Arrange: cleanup and open form', async () => {
+        await tradingApi.deleteE2ETradingAndVerify(prefix)
+        await tradingPage.goto()
+        await tradingPage.expectValidationErrorNotVisible()
+      })
+
+      const countBefore = await test.step('Act: get count before submit', () =>
+        countByPrefix<TradingEntryResponse>(
+          () => tradingApi.getListResponse(),
+          prefix,
+          (e) => e.note ?? ''
+        ))
+
+      await test.step('Act: submit invalid data', () => tradingPage.createEntry(data))
+
+      await test.step('Assert: validation visible and no entry created', async () => {
+        await tradingPage.expectValidationErrorVisible()
+        await tradingApi.assertNoEntryWithNote(data.note)
+        const countAfter = await countByPrefix<TradingEntryResponse>(
+          () => tradingApi.getListResponse(),
+          prefix,
+          (e) => e.note ?? ''
+        )
+        expect(countAfter).toBe(countBefore)
+      })
+    })
+  }
+})

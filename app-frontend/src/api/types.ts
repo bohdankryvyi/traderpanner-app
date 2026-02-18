@@ -75,4 +75,3 @@ export type ApiErrorResponse = {
   message: string
   path: string
 }
-

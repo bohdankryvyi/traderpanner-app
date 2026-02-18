@@ -39,8 +39,10 @@ export class PortfolioPage {
     if (data.sector != null) await this.page.getByTestId('portfolio-sector').fill(data.sector)
     if (data.company != null) await this.page.getByTestId('portfolio-company').fill(data.company)
     if (data.ticker != null) await this.page.getByTestId('portfolio-ticker').fill(data.ticker)
-    if (data.buyPrice != null) await this.page.getByTestId('portfolio-buy-price').fill(data.buyPrice)
-    if (data.targetPrice != null) await this.page.getByTestId('portfolio-target-price').fill(data.targetPrice)
+    if (data.buyPrice != null)
+      await this.page.getByTestId('portfolio-buy-price').fill(data.buyPrice)
+    if (data.targetPrice != null)
+      await this.page.getByTestId('portfolio-target-price').fill(data.targetPrice)
     if (data.quantity != null) await this.page.getByTestId('portfolio-quantity').fill(data.quantity)
     if (data.notes != null) await this.page.getByTestId('portfolio-notes').fill(data.notes)
     await this.page.getByTestId('portfolio-form-submit').click()
@@ -62,7 +64,9 @@ export class PortfolioPage {
     const count = await locator.count()
     if (count === 0) {
       throw new Error(
-        'expectValidationErrorVisible failed: no element with data-testid=' + FORM_ERROR_TESTID + ' found in DOM'
+        'expectValidationErrorVisible failed: no element with data-testid=' +
+          FORM_ERROR_TESTID +
+          ' found in DOM'
       )
     }
     await expect(locator.first()).toBeVisible()

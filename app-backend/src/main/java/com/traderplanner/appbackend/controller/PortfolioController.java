@@ -16,37 +16,36 @@ import java.util.List;
 @Tag(name = "Portfolio")
 public class PortfolioController {
 
-    private final PortfolioService portfolioService;
+	private final PortfolioService portfolioService;
 
-    public PortfolioController(PortfolioService portfolioService) {
-        this.portfolioService = portfolioService;
-    }
+	public PortfolioController(PortfolioService portfolioService) {
+		this.portfolioService = portfolioService;
+	}
 
-    @GetMapping
-    @Operation(summary = "List portfolio positions with computed analytics")
-    public List<PortfolioPositionResponse> list() {
-        return portfolioService.getAll();
-    }
+	@GetMapping
+	@Operation(summary = "List portfolio positions with computed analytics")
+	public List<PortfolioPositionResponse> list() {
+		return portfolioService.getAll();
+	}
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create portfolio position")
-    public PortfolioPositionResponse create(@Valid @RequestBody PortfolioPositionRequest request) {
-        return portfolioService.create(request);
-    }
+	@PostMapping
+	@ResponseStatus(HttpStatus.CREATED)
+	@Operation(summary = "Create portfolio position")
+	public PortfolioPositionResponse create(@Valid @RequestBody PortfolioPositionRequest request) {
+		return portfolioService.create(request);
+	}
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Update portfolio position")
-    public PortfolioPositionResponse update(@PathVariable("id") Long id,
-                                            @Valid @RequestBody PortfolioPositionRequest request) {
-        return portfolioService.update(id, request);
-    }
+	@PutMapping("/{id}")
+	@Operation(summary = "Update portfolio position")
+	public PortfolioPositionResponse update(@PathVariable("id") Long id,
+			@Valid @RequestBody PortfolioPositionRequest request) {
+		return portfolioService.update(id, request);
+	}
 
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Delete portfolio position")
-    public void delete(@PathVariable("id") Long id) {
-        portfolioService.delete(id);
-    }
+	@DeleteMapping("/{id}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@Operation(summary = "Delete portfolio position")
+	public void delete(@PathVariable("id") Long id) {
+		portfolioService.delete(id);
+	}
 }
-
