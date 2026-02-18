@@ -1,5 +1,7 @@
 import { test, expect } from '../../src/fixtures/baseFixture'
 import { portfolioNegativeCases } from '../../src/data/datasets/portfolioCases'
+import { getCountWithPrefix } from '../../src/utils/prefixCount'
+import type { PortfolioPositionResponse } from '../../src/api/types'
 
 const caseNames = portfolioNegativeCases('_').map((c) => c.name)
 
@@ -11,13 +13,19 @@ for (const name of caseNames) {
     await portfolioPage.goto()
     await portfolioPage.expectValidationErrorNotVisible()
 
-    const listBefore = (await portfolioApi.getListResponse()).body
-    const beforePrefixCount = listBefore.filter((p) => (p.notes ?? '').startsWith(prefix)).length
+    const countBefore = await getCountWithPrefix<PortfolioPositionResponse>(
+      () => portfolioApi.getListResponse(),
+      prefix,
+      (p) => p.notes ?? ''
+    )
     await portfolioPage.createPosition(data)
     await portfolioPage.expectValidationErrorVisible()
     await portfolioApi.assertNoPositionWithNotes(data.notes)
-    const listAfter = (await portfolioApi.getListResponse()).body
-    const afterPrefixCount = listAfter.filter((p) => (p.notes ?? '').startsWith(prefix)).length
-    expect(afterPrefixCount).toBe(beforePrefixCount)
+    const countAfter = await getCountWithPrefix<PortfolioPositionResponse>(
+      () => portfolioApi.getListResponse(),
+      prefix,
+      (p) => p.notes ?? ''
+    )
+    expect(countAfter).toBe(countBefore)
   })
 }

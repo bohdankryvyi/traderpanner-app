@@ -8,6 +8,7 @@ Monorepo:
 > E2E test implementation details and the full runbook are documented in `e2e/README.md`.
 
 > AI recommendation feature is in development and will be fully completed in the next iterations.
+> Unit and API tests are in development and will be fully completed in the next iterations.
 
 ## What is this app?
 
@@ -89,9 +90,16 @@ Frontend: `http://localhost:5173`
 On **PowerShell**, for custom logging quote the `-D` expression:  
 `.\mvnw.cmd "-Dspring-boot.run.arguments=--logging.level.com.traderplanner=DEBUG" spring-boot:run`
 
-## E2E tests
+## E2E tests (Playwright)
 
-E2E tests live in the e2e/ module and run against locally running backend + frontend.
+E2E tests live in the **`e2e/`** module and run against a running backend and frontend. They cover:
+
+- **Trading:** CRUD (create → edit → delete) and negative validation; API verification that no E2E-prefixed entries remain after cleanup.
+- **Portfolio:** CRUD and negative validation; API verification that no E2E-prefixed positions remain after cleanup.
+
+Tests use prefix-only cleanup (no delete-all) and are parallel-safe; the DB does not need to be empty.
+
+**Run locally (PowerShell):**
 
 ```powershell
 cd e2e
@@ -100,30 +108,21 @@ npx playwright install
 npm run test
 ```
 
-To run tests in the browser (headed mode), from the repo root:
-
-```powershell
-cd e2e
-npx playwright test --headed
-```
+Start the backend and frontend first (see [Local run](#local-run) above). A preflight check runs before tests and fails fast with a clear message if frontend or backend is unreachable. For full details (env vars, preflight, reports), see **[e2e/README.md](e2e/README.md)**.
 
 ## CI: GitHub Actions E2E
 
-- **Workflow file:** `.github/workflows/e2e.yml`
-- **When it runs:** On every Pull Request (all branches) and on manual run (`workflow_dispatch`).
+- **Workflow file:** [.github/workflows/e2e.yml](.github/workflows/e2e.yml)
+- **When it runs:** On every pull request and on manual trigger (`workflow_dispatch`).
 - **What CI starts:**
   - **Postgres** — service container `postgres:16` (port 5432, healthcheck).
-  - **Backend** — Spring Boot on `:8080` with `JAVA_TOOL_OPTIONS=-Duser.timezone=UTC`, DB env vars set for the Postgres service.
-  - **Frontend** — built with `npm ci` + `npm run build`, then served via `npm run preview -- --host 127.0.0.1 --port 5173` (`VITE_API_BASE_URL=http://localhost:8080`).
-  - **Playwright** — tests run from the `e2e/` module.
-- **What the tests do (high level):**
-  - **Trading:** CRUD + negative validation; verify `/api/trading` returns `[]` after cleanup.
-  - **Portfolio:** CRUD + negative validation; verify `/api/portfolio` returns `[]` after cleanup.
-  - **Isolation:** Prefix-based cleanup per worker (parallel-safe).
+  - **Backend** — Spring Boot on `:8080` (DB env vars point at Postgres; `JAVA_TOOL_OPTIONS=-Duser.timezone=UTC`). AI keys are empty in CI; E2E does not test AI and the pattern endpoint returns 200 with a fallback.
+  - **Frontend** — `npm ci` + `npm run build` in `app-frontend`, then `npm run preview -- --host 127.0.0.1 --port 5173` with `VITE_API_BASE_URL=http://localhost:8080`.
+  - **Playwright** — runs from the `e2e/` directory after preflight passes.
 - **Artifacts (uploaded even on failure):**
   - **playwright-report** — HTML report.
-  - **app-logs** — `backend.log`, `frontend.log`.
-- **Branch protection:** To require E2E before merge, add the check **e2e** (job name) as a required status check in the branch protection rule.
+  - **app-logs** — `backend.log`, `frontend.log` when present.
+- **Branch protection:** To require E2E before merge, add the **e2e** job as a required status check in branch protection rules.
 
 ## How the app works (including AI)
 

@@ -1,17 +1,17 @@
 import type { APIRequestContext } from '@playwright/test'
-
-const API_BASE = 'http://localhost:8080'
+import { getApiBaseURL } from '../config/env'
 
 export function createApiClient(request: APIRequestContext) {
+  const apiBase = getApiBaseURL()
   return {
     async getJson<T>(path: string): Promise<{ status: number; body: T }> {
-      const res = await request.get(`${API_BASE}${path}`)
+      const res = await request.get(`${apiBase}${path}`)
       const body = (await res.json().catch(() => ({}))) as T
       return { status: res.status(), body }
     },
 
     async postJson<T>(path: string, body: unknown): Promise<{ status: number; body: T }> {
-      const res = await request.post(`${API_BASE}${path}`, {
+      const res = await request.post(`${apiBase}${path}`, {
         data: body,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -20,7 +20,7 @@ export function createApiClient(request: APIRequestContext) {
     },
 
     async putJson<T>(path: string, body: unknown): Promise<{ status: number; body: T }> {
-      const res = await request.put(`${API_BASE}${path}`, {
+      const res = await request.put(`${apiBase}${path}`, {
         data: body,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -29,7 +29,7 @@ export function createApiClient(request: APIRequestContext) {
     },
 
     async delete(path: string): Promise<{ status: number }> {
-      const res = await request.delete(`${API_BASE}${path}`)
+      const res = await request.delete(`${apiBase}${path}`)
       return { status: res.status() }
     },
   }
